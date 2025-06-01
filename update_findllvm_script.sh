@@ -1,3 +1,17 @@
+#!/bin/bash
+set -e
+
+FILE_PATH="CMake/FindLLVM.cmake"
+
+# Create a backup
+cp "$FILE_PATH" "${FILE_PATH}.bak"
+
+# New content for FindLLVM.cmake
+# This version simplifies Clang library finding, assuming Clang libraries are
+# either pulled in by the main LLVM library or by a general clang-cpp library.
+# It also tries to get Clang include dirs.
+
+cat > "$FILE_PATH" << 'EOF'
 # Find the native LLVM includes and library
 #
 # LLVM_INCLUDE_DIR - where to find llvm include files
@@ -34,9 +48,9 @@ execute_process(
   OUTPUT_VARIABLE LLVM_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1\\2" LLVM_VERSION_NODOT ${LLVM_VERSION})
-string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION_NOPATCH ${LLVM_VERSION})
-string(REGEX REPLACE "([0-9]+)\\..*" "\\1" LLVM_VERSION_MAJOR ${LLVM_VERSION})
+string(REGEX REPLACE "([0-9]+)\.([0-9]+).*" "\1\2" LLVM_VERSION_NODOT ${LLVM_VERSION})
+string(REGEX REPLACE "([0-9]+)\.([0-9]+).*" "\1.\2" LLVM_VERSION_NOPATCH ${LLVM_VERSION})
+string(REGEX REPLACE "([0-9]+)\..*" "\1" LLVM_VERSION_MAJOR ${LLVM_VERSION})
 
 
 message(STATUS "LLVM version: ${LLVM_VERSION} (nodot: ${LLVM_VERSION_NODOT}, major: ${LLVM_VERSION_MAJOR})")
@@ -249,3 +263,16 @@ MARK_AS_ADVANCED(
     CLANG_CPP_LIB
     CLANG_GENERIC_LIB
 )
+EOF
+
+echo "File CMake/FindLLVM.cmake has been updated."
+echo "Showing diff:"
+diff -u "${FILE_PATH}.bak" "$FILE_PATH" || true # Show diff, continue if no changes (though there should be)
+
+# Verify the new file content (optional sanity check)
+echo ""
+echo "First few lines of the new CMake/FindLLVM.cmake:"
+head -n 20 "$FILE_PATH"
+echo ""
+echo "Last few lines of the new CMake/FindLLVM.cmake:"
+tail -n 20 "$FILE_PATH"
