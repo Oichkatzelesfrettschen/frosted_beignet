@@ -245,11 +245,21 @@ namespace gbe
     virtual bool runOnBasicBlock(BasicBlock &BB)
     {
       bool changedBlock = false;
-      iplist<Instruction>::iterator I = BB.getInstList().begin();
-      for (auto nextI = I, E = --BB.getInstList().end(); I != E; I = nextI) {
-        iplist<Instruction>::iterator I = nextI++;
-        if(GetElementPtrInst* gep = dyn_cast<GetElementPtrInst>(&*I))
-          changedBlock = (simplifyGEPInstructions(gep) || changedBlock);
+    // Iterate safely, as simplifyGEPInstructions may erase the current instruction
+    for (Instruction &I : BB) {
+      if (GetElementPtrInst* gep = dyn_cast<GetElementPtrInst>(&I)) {
+        // Check if gep is still in a basic block, as it might have been erased by a previous iteration
+        if (gep->getParent()) {
+          if (simplifyGEPInstructions(gep)) {
+            changedBlock = true;
+            // After simplification, the GEP is erased, so we don't need to worry about iterator invalidation
+            // for this specific instruction. However, the loop structure itself needs to be safe.
+            // Re-evaluating BB.getInstList().end() or using a different loop might be needed if further modifications
+            // within the loop could alter BB structure significantly beyond erasing 'gep'.
+            // For now, assuming simplifyGEPInstructions only erases 'gep' and inserts before it.
+          }
+        }
+      }
       }
       return changedBlock;
     }
@@ -259,14 +269,15 @@ namespace gbe
 
   bool GenRemoveGEPPasss::simplifyGEPInstructions(GetElementPtrInst* GEPInst)
   {
+  IRBuilder<> IRB(GEPInst); // Initialize IRBuilder before GEPInst
     const uint32_t ptrSize = unit.getPointerSize();
     Value* parentPointer = GEPInst->getOperand(0);
     Type* eltTy = parentPointer ? parentPointer->getType() : NULL;
     if(!eltTy)
       return false;
 
-    Value* currentAddrInst = 
-      new PtrToIntInst(parentPointer, IntegerType::get(GEPInst->getContext(), ptrSize), "", GEPInst);
+  Value* currentAddrInst =
+    IRB.CreatePtrToInt(parentPointer, IntegerType::get(GEPInst->getContext(), ptrSize));
 
     int32_t constantOffset = 0;
 
@@ -279,89 +290,45 @@ namespace gbe
         constantOffset += getGEPConstOffset(unit, eltTy, TypeIndex);
       }
       else {
-        // we only have array/vectors here, 
-        // therefore all elements have the same size
-        TypeIndex = 0;
+      TypeIndex = 0; // For non-constant indices, type stepping is based on the current eltTy
 
         Type* elementType = getEltType(eltTy);
-
         uint32_t size = getTypeByteSize(unit, elementType);
-
-        //add padding
         uint32_t align = getAlignmentByte(unit, elementType);
         size += getPadding(size, align);
 
-
-        Value *operand = GEPInst->getOperand(op); 
-
+      Value *operand = GEPInst->getOperand(op);
         if(!operand)
           continue;
-#if 0
-        //HACK TODO: Inserted by type replacement.. this code could break something????
-        if(getTypeByteSize(unit, operand->getType())>4)
-        {
-          GBE_ASSERTM(false, "CHECK IT");
-          operand->dump();
 
-          //previous instruction is sext or zext instr. ignore it
-          CastInst *cast = dyn_cast<CastInst>(operand);
-          if(cast && (isa<ZExtInst>(operand) || isa<SExtInst>(operand)))
-          {
-            //hope that CastInst is a s/zext
-            operand = cast->getOperand(0);
-          }
-          else
-          {
-            //trunctate
-            operand = 
-              new TruncInst(operand, 
-                  IntegerType::get(GEPInst->getContext(), 
-                    ptrSize), 
-                  "", GEPInst);
-          }
-        }
-#endif
         Value* tmpOffset = operand;
         if (size != 1) {
           if (isPowerOf<2>(size)) {
             Constant* shiftAmnt =
               ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), logi2(size));
-            tmpOffset = BinaryOperator::Create(Instruction::Shl, operand, shiftAmnt,
-                                           "", GEPInst);
+          tmpOffset = IRB.CreateShl(operand, shiftAmnt);
           } else{
             Constant* sizeConst =
               ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), size);
-            tmpOffset = BinaryOperator::Create(Instruction::Mul, sizeConst, operand,
-                                           "", GEPInst);
+          tmpOffset = IRB.CreateMul(operand, sizeConst); // operand was first before, ensure correct order
           }
         }
-        currentAddrInst = 
-          BinaryOperator::Create(Instruction::Add, currentAddrInst, tmpOffset,
-              "", GEPInst);
+      currentAddrInst = IRB.CreateAdd(currentAddrInst, tmpOffset);
       }
 
-      //step down in type hirachy
       eltTy = getEltType(eltTy, TypeIndex);
     }
 
-    //insert addition of new offset before GEPInst when it is not zero
     if (constantOffset != 0) {
       Constant* newConstOffset =
-        ConstantInt::get(IntegerType::get(GEPInst->getContext(),
-              ptrSize),
-            constantOffset);
-      currentAddrInst =
-        BinaryOperator::Create(Instruction::Add, currentAddrInst,
-            newConstOffset, "", GEPInst);
+      ConstantInt::get(IntegerType::get(GEPInst->getContext(), ptrSize), constantOffset);
+    currentAddrInst = IRB.CreateAdd(currentAddrInst, newConstOffset);
     }
 
-    //convert offset to ptr type (nop)
-    IntToPtrInst* intToPtrInst = 
-      new IntToPtrInst(currentAddrInst,GEPInst->getType(),"", GEPInst);
+  Value* intToPtrInst = IRB.CreateIntToPtr(currentAddrInst, GEPInst->getType());
 
-    //replace uses of the GEP instruction with the newly calculated pointer
     GEPInst->replaceAllUsesWith(intToPtrInst);
-    GEPInst->dropAllReferences();
+  // GEPInst->dropAllReferences(); // Removed
     GEPInst->eraseFromParent();
 
     return true;

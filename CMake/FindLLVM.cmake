@@ -8,12 +8,12 @@
 # LLVM_FOUND       - True if llvm found.
 if (LLVM_INSTALL_DIR)
   find_program(LLVM_CONFIG_EXECUTABLE
-               NAMES llvm-config-37 llvm-config-3.7 llvm-config-36 llvm-config-3.6 llvm-config-38 llvm-config-3.8 llvm-config-39 llvm-config-3.9 llvm-config llvm-config-35 llvm-config-3.5 llvm-config-34 llvm-config-3.4
+               NAMES llvm-config-20 llvm-config-20.0 llvm-config-19 llvm-config-19.0 llvm-config-18 llvm-config-18.0 llvm-config-17 llvm-config-17.0 llvm-config-16 llvm-config-16.0 llvm-config-15 llvm-config-15.0 llvm-config-14 llvm-config-14.0 llvm-config-13 llvm-config-13.0 llvm-config-12 llvm-config-12.0 llvm-config-11 llvm-config-11.0 llvm-config-10 llvm-config-10.0 llvm-config-9 llvm-config-9.0 llvm-config-8 llvm-config-8.0 llvm-config-7 llvm-config-7.0 llvm-config-6 llvm-config-6.0 llvm-config-5 llvm-config-5.0 llvm-config-4 llvm-config-4.0 llvm-config-39 llvm-config-3.9 llvm-config-38 llvm-config-3.8 llvm-config-37 llvm-config-3.7 llvm-config-36 llvm-config-3.6 llvm-config-35 llvm-config-3.5 llvm-config-34 llvm-config-3.4 llvm-config
                DOC "llvm-config executable"
                PATHS ${LLVM_INSTALL_DIR} NO_DEFAULT_PATH)
 else (LLVM_INSTALL_DIR)
   find_program(LLVM_CONFIG_EXECUTABLE
-               NAMES llvm-config-37 llvm-config-3.7 llvm-config-36 llvm-config-3.6 llvm-config-38 llvm-config-3.8 llvm-config-39 llvm-config-3.9 llvm-config llvm-config-35 llvm-config-3.5 llvm-config-34 llvm-config-3.4
+               NAMES llvm-config-20 llvm-config-20.0 llvm-config-19 llvm-config-19.0 llvm-config-18 llvm-config-18.0 llvm-config-17 llvm-config-17.0 llvm-config-16 llvm-config-16.0 llvm-config-15 llvm-config-15.0 llvm-config-14 llvm-config-14.0 llvm-config-13 llvm-config-13.0 llvm-config-12 llvm-config-12.0 llvm-config-11 llvm-config-11.0 llvm-config-10 llvm-config-10.0 llvm-config-9 llvm-config-9.0 llvm-config-8 llvm-config-8.0 llvm-config-7 llvm-config-7.0 llvm-config-6 llvm-config-6.0 llvm-config-5 llvm-config-5.0 llvm-config-4 llvm-config-4.0 llvm-config-39 llvm-config-3.9 llvm-config-38 llvm-config-3.8 llvm-config-37 llvm-config-3.7 llvm-config-36 llvm-config-3.6 llvm-config-35 llvm-config-3.5 llvm-config-34 llvm-config-3.4 llvm-config
                DOC "llvm-config executable")
 endif (LLVM_INSTALL_DIR)
 
@@ -29,6 +29,7 @@ execute_process(
 )
 string(REGEX REPLACE "([0-9])\\.([0-9]*).*" "\\1\\2" LLVM_VERSION_NODOT ${LLVM_VERSION})
 string(REGEX REPLACE "([0-9])\\.([0-9]*).*" "\\1.\\2" LLVM_VERSION_NOPATCH ${LLVM_VERSION})
+string(REGEX REPLACE "([0-9]+)\\..*" "\\1" LLVM_MAJOR_VERSION ${LLVM_VERSION})
 
 if (LLVM_FIND_VERSION_MAJOR AND LLVM_FIND_VERSION_MINOR)
   SET(LLVM_FIND_VERSION_NODOT "${LLVM_FIND_VERSION_MAJOR}${LLVM_FIND_VERSION_MINOR}")
@@ -46,21 +47,21 @@ endif (LLVM_FIND_VERSION_MAJOR AND LLVM_FIND_VERSION_MINOR)
 
 if (LLVM_INSTALL_DIR)
   find_program(CLANG_EXECUTABLE
-               NAMES clang-${LLVM_VERSION_NODOT} clang-${LLVM_VERSION_NOPATCH} clang
+               NAMES clang-${LLVM_MAJOR_VERSION} clang-${LLVM_VERSION_NODOT} clang-${LLVM_VERSION_NOPATCH} clang
                PATHS ${LLVM_INSTALL_DIR} NO_DEFAULT_PATH)
   find_program(LLVM_AS_EXECUTABLE
-               NAMES llvm-as-${LLVM_VERSION_NODOT} llvm-as-${LLVM_VERSION_NOPATCH} llvm-as
+               NAMES llvm-as-${LLVM_MAJOR_VERSION} llvm-as-${LLVM_VERSION_NODOT} llvm-as-${LLVM_VERSION_NOPATCH} llvm-as
                PATHS ${LLVM_INSTALL_DIR} NO_DEFAULT_PATH)
   find_program(LLVM_LINK_EXECUTABLE
-               NAMES llvm-link-${LLVM_VERSION_NODOT} llvm-link-${LLVM_VERSION_NOPATCH} llvm-link
+               NAMES llvm-link-${LLVM_MAJOR_VERSION} llvm-link-${LLVM_VERSION_NODOT} llvm-link-${LLVM_VERSION_NOPATCH} llvm-link
                PATHS ${LLVM_INSTALL_DIR} NO_DEFAULT_PATH)
 else (LLVM_INSTALL_DIR)
   find_program(CLANG_EXECUTABLE
-               NAMES clang-${LLVM_VERSION_NODOT} clang-${LLVM_VERSION_NOPATCH} clang)
+               NAMES clang-${LLVM_MAJOR_VERSION} clang-${LLVM_VERSION_NODOT} clang-${LLVM_VERSION_NOPATCH} clang)
   find_program(LLVM_AS_EXECUTABLE
-               NAMES llvm-as-${LLVM_VERSION_NODOT} llvm-as-${LLVM_VERSION_NOPATCH} llvm-as)
+               NAMES llvm-as-${LLVM_MAJOR_VERSION} llvm-as-${LLVM_VERSION_NODOT} llvm-as-${LLVM_VERSION_NOPATCH} llvm-as)
   find_program(LLVM_LINK_EXECUTABLE
-               NAMES llvm-link-${LLVM_VERSION_NODOT} llvm-link-${LLVM_VERSION_NOPATCH} llvm-link)
+               NAMES llvm-link-${LLVM_MAJOR_VERSION} llvm-link-${LLVM_VERSION_NODOT} llvm-link-${LLVM_VERSION_NOPATCH} llvm-link)
 endif (LLVM_INSTALL_DIR)
 
 execute_process(
