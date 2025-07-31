@@ -387,6 +387,9 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations" )
 
 ADD_LIBRARY(utests SHARED ${utests_sources})
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
+  target_compile_options(utests PRIVATE -fno-rtti)
+endif()
 
 if (NOT_BUILD_STAND_ALONE_UTEST)
   TARGET_LINK_LIBRARIES(utests cl m ${UTESTS_REQUIRED_GL_EGL_X11_LIB} ${CMAKE_THREAD_LIBS_INIT} ${UTESTS_REQUIRED_X11_LIB})
@@ -395,6 +398,9 @@ else()
 endif()
 
 ADD_EXECUTABLE(utest_run utest_run.cpp)
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
+  target_compile_options(utest_run PRIVATE -fno-rtti)
+endif()
 TARGET_LINK_LIBRARIES(utest_run utests)
 
 if (NOT_BUILD_STAND_ALONE_UTEST)
@@ -404,5 +410,8 @@ endif (NOT_BUILD_STAND_ALONE_UTEST)
 ADD_DEPENDENCIES (utests utest_generator)
 
 ADD_EXECUTABLE(flat_address_space runtime_flat_address_space.cpp)
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
+  target_compile_options(flat_address_space PRIVATE -fno-rtti)
+endif()
 TARGET_LINK_LIBRARIES(flat_address_space utests)
 ADD_CUSTOM_TARGET(utest DEPENDS utest_run utests flat_address_space)

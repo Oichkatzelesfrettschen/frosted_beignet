@@ -216,8 +216,11 @@ class ConversionState {
 
   void eraseReplacedInstructions() {
     for (SmallVectorImpl<Instruction *>::iterator I = ToErase.begin(),
-             E = ToErase.end(); I != E; ++I)
-      (*I)->dropAllReferences();
+             E = ToErase.end(); I != E; ++I) {
+      if (!(*I)->use_empty()) {
+        (*I)->replaceAllUsesWith(UndefValue::get((*I)->getType()));
+      }
+    }
     for (SmallVectorImpl<Instruction *>::iterator I = ToErase.begin(),
              E = ToErase.end(); I != E; ++I)
       (*I)->eraseFromParent();
@@ -338,28 +341,28 @@ static Value *splitStore(StoreInst *Inst, ConversionState &State) {
 
 // Return a converted value with the bits of the operand above the size of the
 // original type cleared.
-static Value *getClearConverted(Value *Operand, Instruction *InsertPt,
-                                ConversionState &State) {
-  if(!Operand)
-    return Operand;
-  Type *OrigType = Operand->getType();
-  Instruction *OrigInst = dyn_cast<Instruction>(Operand);
-  Operand = State.getConverted(Operand);
+static Value *getClearConverted(Value *OriginalOperand, Type *OrigType, IRBuilder<> &IRB, ConversionState &State) {
+  if(!OriginalOperand)
+    return OriginalOperand;
+  Instruction *OrigInst = dyn_cast<Instruction>(OriginalOperand);
+  Value *ConvertedOperand = State.getConverted(OriginalOperand); // This is the potentially promoted operand
+
   // If the operand is a constant, it will have been created by
-  // ConversionState.getConverted, which zero-extends by default.
-  if (isa<Constant>(Operand))
-    return Operand;
-  Instruction *NewInst = BinaryOperator::Create(
-      Instruction::And,
-      Operand,
-      ConstantInt::get(
+  // ConversionState.getConverted (via convertConstant), which zero-extends by default.
+  if (isa<Constant>(ConvertedOperand))
+    return ConvertedOperand;
+
+  Value *Mask = ConstantInt::get(
           getPromotedType(OrigType),
           APInt::getLowBitsSet(getPromotedType(OrigType)->getIntegerBitWidth(),
-                               OrigType->getIntegerBitWidth())),
-      Operand->getName() + ".clear",
-      InsertPt);
-  if (OrigInst)
-    CopyDebug(NewInst, OrigInst);
+                               OrigType->getIntegerBitWidth()));
+  Value *NewInst = IRB.CreateAnd(ConvertedOperand, Mask, ConvertedOperand->getName() + ".clear");
+
+  if (OrigInst) {
+    if (Instruction *CreatedInst = dyn_cast<Instruction>(NewInst)) {
+        CopyDebug(CreatedInst, OrigInst);
+    }
+  }
   return NewInst;
 }
 
@@ -368,52 +371,47 @@ static Value *getClearConverted(Value *Operand, Instruction *InsertPt,
 // assumed to have been legalized already.
 // This is done by shifting the sign bit of the smaller value up to the MSB
 // position in the larger size, and then arithmetic-shifting it back down.
-static Value *getSignExtend(Value *Operand, Value *OrigOperand,
-                            Instruction *InsertPt) {
-  // If OrigOperand was a constant, NewOperand will have been created by
-  // ConversionState.getConverted, which zero-extends by default. But that is
-  // wrong here, so replace it with a sign-extended constant.
-  if (Constant *C = dyn_cast<Constant>(OrigOperand))
+static Value *getSignExtend(Value *ConvertedOperand, Value *OriginalOperand, Type *OrigType, IRBuilder<> &IRB) {
+  // If OriginalOperand was a constant, ConvertedOperand will have been created by
+  // ConversionState.getConverted (via convertConstant), which zero-extends by default.
+  // But that is wrong here, so replace it with a sign-extended constant.
+  if (Constant *C = dyn_cast<Constant>(OriginalOperand))
     return convertConstant(C, /*SignExt=*/true);
-  Type *OrigType = OrigOperand->getType();
+
+  Type *PromotedType = getPromotedType(OrigType);
+
   ConstantInt *ShiftAmt = ConstantInt::getSigned(
-      cast<IntegerType>(getPromotedType(OrigType)),
-      getPromotedType(OrigType)->getIntegerBitWidth() -
-        OrigType->getIntegerBitWidth());
-  BinaryOperator *Shl = BinaryOperator::Create(
-      Instruction::Shl,
-      Operand,
-      ShiftAmt,
-      Operand->getName() + ".getsign",
-      InsertPt);
-  if (Instruction *Inst = dyn_cast<Instruction>(OrigOperand))
-    CopyDebug(Shl, Inst);
-  return CopyDebug(BinaryOperator::Create(
-      Instruction::AShr,
-      Shl,
-      ShiftAmt,
-      Operand->getName() + ".signed",
-      InsertPt), Shl);
+      cast<IntegerType>(PromotedType),
+      PromotedType->getIntegerBitWidth() - OrigType->getIntegerBitWidth());
+
+  Value *Shl = IRB.CreateShl(ConvertedOperand, ShiftAmt, ConvertedOperand->getName() + ".getsign");
+  if (Instruction *OrigInst = dyn_cast<Instruction>(OriginalOperand)) {
+    if (Instruction *CreatedInst = dyn_cast<Instruction>(Shl)) CopyDebug(CreatedInst, OrigInst);
+  }
+
+  Value *AShr = IRB.CreateAShr(Shl, ShiftAmt, ConvertedOperand->getName() + ".signed");
+  if (Instruction *OrigInst = dyn_cast<Instruction>(OriginalOperand)) {
+     if (Instruction *CreatedInst = dyn_cast<Instruction>(AShr)) CopyDebug(CreatedInst, OrigInst);
+  }
+  return AShr;
 }
 
 static void convertInstruction(Instruction *Inst, ConversionState &State) {
+  IRBuilder<> IRB(Inst); // Default IRB pointing at the instruction itself.
+                         // Will be repositioned if needed.
+
   if (SExtInst *Sext = dyn_cast<SExtInst>(Inst)) {
     Value *Op = Sext->getOperand(0);
     Value *NewInst = NULL;
-    // If the operand to be extended is illegal, we first need to fill its
-    // upper bits with its sign bit.
     if (shouldConvert(Op)) {
-      NewInst = getSignExtend(State.getConverted(Op), Op, Sext);
+      NewInst = getSignExtend(State.getConverted(Op), Op, Op->getType(), IRB);
     }
-    // If the converted type of the operand is the same as the converted
-    // type of the result, we won't actually be changing the type of the
-    // variable, just its value.
-    if (getPromotedType(Op->getType()) !=
-        getPromotedType(Sext->getType())) {
-      NewInst = CopyDebug(new SExtInst(
-          NewInst ? NewInst : State.getConverted(Op),
-          getPromotedType(cast<IntegerType>(Sext->getType())),
-          Sext->getName() + ".sext", Sext), Sext);
+    if (getPromotedType(Op->getType()) != getPromotedType(Sext->getType())) {
+      IRB.SetInsertPoint(Sext);
+      NewInst = IRB.CreateSExt(NewInst ? NewInst : State.getConverted(Op),
+                               getPromotedType(cast<IntegerType>(Sext->getType())),
+                               Sext->getName() + ".sext");
+      CopyDebug(cast<Instruction>(NewInst), Sext);
     }
     assert(NewInst && "Failed to convert sign extension");
     State.recordConverted(Sext, NewInst);
@@ -421,34 +419,26 @@ static void convertInstruction(Instruction *Inst, ConversionState &State) {
     Value *Op = Zext->getOperand(0);
     Value *NewInst = NULL;
     if (shouldConvert(Op)) {
-      NewInst = getClearConverted(Op, Zext, State);
+      NewInst = getClearConverted(Op, Op->getType(), IRB, State);
     }
-    // If the converted type of the operand is the same as the converted
-    // type of the result, we won't actually be changing the type of the
-    // variable, just its value.
-    if (getPromotedType(Op->getType()) !=
-        getPromotedType(Zext->getType())) {
-      NewInst = CopyDebug(CastInst::CreateZExtOrBitCast(
-          NewInst ? NewInst : State.getConverted(Op),
-          getPromotedType(cast<IntegerType>(Zext->getType())),
-          "", Zext), Zext);
+    if (getPromotedType(Op->getType()) != getPromotedType(Zext->getType())) {
+      IRB.SetInsertPoint(Zext);
+      NewInst = IRB.CreateZExtOrBitCast(NewInst ? NewInst : State.getConverted(Op),
+                                        getPromotedType(cast<IntegerType>(Zext->getType())));
+      if (!Zext->getName().empty()) NewInst->setName(Zext->getName() + ".zext");
+      CopyDebug(cast<Instruction>(NewInst), Zext);
     }
     assert(NewInst);
     State.recordConverted(Zext, NewInst);
   } else if (TruncInst *Trunc = dyn_cast<TruncInst>(Inst)) {
     Value *Op = Trunc->getOperand(0);
     Value *NewInst;
-    // If the converted type of the operand is the same as the converted
-    // type of the result, we don't actually need to change the type of the
-    // variable, just its value. However, because we don't care about the values
-    // of the upper bits until they are consumed, truncation can be a no-op.
-    if (getPromotedType(Op->getType()) !=
-        getPromotedType(Trunc->getType())) {
-      NewInst = CopyDebug(new TruncInst(
-          State.getConverted(Op),
-          getPromotedType(cast<IntegerType>(Trunc->getType())),
-          State.getConverted(Op)->getName() + ".trunc",
-          Trunc), Trunc);
+    if (getPromotedType(Op->getType()) != getPromotedType(Trunc->getType())) {
+      IRB.SetInsertPoint(Trunc);
+      NewInst = IRB.CreateTrunc(State.getConverted(Op),
+                                getPromotedType(cast<IntegerType>(Trunc->getType())),
+                                State.getConverted(Op)->getName() + ".trunc");
+      CopyDebug(cast<Instruction>(NewInst), Trunc);
     } else {
       NewInst = State.getConverted(Op);
     }
@@ -470,54 +460,43 @@ static void convertInstruction(Instruction *Inst, ConversionState &State) {
         // The AShr operand needs to be sign-extended to the promoted size
         // before shifting. Because the sign-extension is implemented with
         // with AShr, it can be combined with the original operation.
-        Value *Op = Binop->getOperand(0);
+        Value *Operand = Binop->getOperand(0);
+        Value *ShiftAmountOperand = Binop->getOperand(1);
+        Value *ConvertedLHS = State.getConverted(Operand);
+        Value *SignExtendedLHS = getSignExtend(ConvertedLHS, Operand, Operand->getType(), IRB);
+
         Value *ShiftAmount = NULL;
-        APInt SignShiftAmt = APInt(
-            getPromotedType(Op->getType())->getIntegerBitWidth(),
-            getPromotedType(Op->getType())->getIntegerBitWidth() -
-            Op->getType()->getIntegerBitWidth());
-        NewInst = CopyDebug(BinaryOperator::Create(
-            Instruction::Shl,
-            State.getConverted(Op),
-            ConstantInt::get(getPromotedType(Op->getType()), SignShiftAmt),
-            State.getConverted(Op)->getName() + ".getsign",
-            Binop), Binop);
-        if (ConstantInt *C = dyn_cast<ConstantInt>(
-                State.getConverted(Binop->getOperand(1)))) {
-          ShiftAmount = ConstantInt::get(getPromotedType(Op->getType()),
-                                         SignShiftAmt + C->getValue());
+        APInt SignShiftVal = APInt(getPromotedType(Operand->getType())->getIntegerBitWidth(),
+                                   getPromotedType(Operand->getType())->getIntegerBitWidth() -
+                                   Operand->getType()->getIntegerBitWidth());
+
+        if (ConstantInt *C = dyn_cast<ConstantInt>(State.getConverted(ShiftAmountOperand))) {
+          ShiftAmount = ConstantInt::get(getPromotedType(Operand->getType()), SignShiftVal + C->getValue());
         } else {
-          // Clear the upper bits of the original shift amount, and add back the
-          // amount we shifted to get the sign bit.
-          ShiftAmount = getClearConverted(Binop->getOperand(1), Binop, State);
-          ShiftAmount = CopyDebug(BinaryOperator::Create(
-              Instruction::Add,
-              ShiftAmount,
-              ConstantInt::get(
-                  getPromotedType(Binop->getOperand(1)->getType()),
-                  SignShiftAmt),
-              State.getConverted(Op)->getName() + ".shamt", Binop), Binop);
+          Value *ClearedShiftAmount = getClearConverted(ShiftAmountOperand, ShiftAmountOperand->getType(), IRB, State);
+          IRB.SetInsertPoint(Binop);
+          ShiftAmount = IRB.CreateAdd(ClearedShiftAmount,
+                                      ConstantInt::get(getPromotedType(ShiftAmountOperand->getType()), SignShiftVal),
+                                      State.getConverted(Operand)->getName() + ".shamt");
         }
-        NewInst = CopyDebug(BinaryOperator::Create(
-            Instruction::AShr,
-            NewInst,
-            ShiftAmount,
-            Binop->getName() + ".result", Binop), Binop);
+        IRB.SetInsertPoint(Binop);
+        NewInst = IRB.CreateAShr(SignExtendedLHS, ShiftAmount, Binop->getName() + ".result");
+        CopyDebug(cast<Instruction>(NewInst), Binop);
         break;
       }
 
       case Instruction::LShr:
       case Instruction::Shl: {
-        // For LShr, clear the upper bits of the operand before shifting them
-        // down into the valid part of the value.
-        Value *Op = Binop->getOpcode() == Instruction::LShr
-                        ? getClearConverted(Binop->getOperand(0), Binop, State)
-                        : State.getConverted(Binop->getOperand(0));
-        NewInst = BinaryOperator::Create(
-            Binop->getOpcode(), Op,
-            // Clear the upper bits of the shift amount.
-            getClearConverted(Binop->getOperand(1), Binop, State),
-            Binop->getName() + ".result", Binop);
+        Value *LHS_Operand = Binop->getOperand(0);
+        Value *RHS_Operand = Binop->getOperand(1);
+        Value *ConvertedLHS = (Binop->getOpcode() == Instruction::LShr)
+                            ? getClearConverted(LHS_Operand, LHS_Operand->getType(), IRB, State)
+                            : State.getConverted(LHS_Operand);
+        Value *ConvertedRHS = getClearConverted(RHS_Operand, RHS_Operand->getType(), IRB, State);
+
+        IRB.SetInsertPoint(Binop);
+        NewInst = IRB.CreateBinOp(Binop->getOpcode(), ConvertedLHS, ConvertedRHS,
+                                  Binop->getName() + ".result");
         break;
       }
       case Instruction::Add:
@@ -526,12 +505,12 @@ static void convertInstruction(Instruction *Inst, ConversionState &State) {
       case Instruction::And:
       case Instruction::Or:
       case Instruction::Xor:
-        // These operations don't care about the state of the upper bits.
-        NewInst = CopyDebug(BinaryOperator::Create(
-            Binop->getOpcode(),
-            State.getConverted(Binop->getOperand(0)),
-            State.getConverted(Binop->getOperand(1)),
-            Binop->getName() + ".result", Binop), Binop);
+        IRB.SetInsertPoint(Binop);
+        NewInst = IRB.CreateBinOp(Binop->getOpcode(),
+                                  State.getConverted(Binop->getOperand(0)),
+                                  State.getConverted(Binop->getOperand(1)),
+                                  Binop->getName() + ".result");
+        CopyDebug(cast<Instruction>(NewInst), Binop);
         break;
       case Instruction::FAdd:
       case Instruction::FSub:
@@ -563,27 +542,27 @@ static void convertInstruction(Instruction *Inst, ConversionState &State) {
     // promoted type. For unsigned or equality compares, the upper bits are
     // cleared.
     if (Cmp->isSigned()) {
-      Op0 = getSignExtend(State.getConverted(Cmp->getOperand(0)),
-                          Cmp->getOperand(0),
-                          Cmp);
-      Op1 = getSignExtend(State.getConverted(Cmp->getOperand(1)),
-                          Cmp->getOperand(1),
-                          Cmp);
+      Op0 = getSignExtend(State.getConverted(Cmp->getOperand(0)), Cmp->getOperand(0), Cmp->getOperand(0)->getType(), IRB);
+      Op1 = getSignExtend(State.getConverted(Cmp->getOperand(1)), Cmp->getOperand(1), Cmp->getOperand(1)->getType(), IRB);
     } else {
-      Op0 = getClearConverted(Cmp->getOperand(0), Cmp, State);
-      Op1 = getClearConverted(Cmp->getOperand(1), Cmp, State);
+      Op0 = getClearConverted(Cmp->getOperand(0), Cmp->getOperand(0)->getType(), IRB, State);
+      Op1 = getClearConverted(Cmp->getOperand(1), Cmp->getOperand(1)->getType(), IRB, State);
     }
-    Instruction *NewInst = CopyDebug(new ICmpInst(
-        Cmp, Cmp->getPredicate(), Op0, Op1, ""), Cmp);
+    IRB.SetInsertPoint(Cmp);
+    Instruction *NewInst = IRB.CreateICmp(Cmp->getPredicate(), Op0, Op1, Cmp->getName());
+    CopyDebug(NewInst, Cmp);
     State.recordConverted(Cmp, NewInst);
   } else if (SelectInst *Select = dyn_cast<SelectInst>(Inst)) {
-    Instruction *NewInst = CopyDebug(SelectInst::Create(
-        Select->getCondition(),
-        State.getConverted(Select->getTrueValue()),
-        State.getConverted(Select->getFalseValue()),
-        "", Select), Select);
+    IRB.SetInsertPoint(Select);
+    Instruction *NewInst = IRB.CreateSelect(Select->getCondition(),
+                                          State.getConverted(Select->getTrueValue()),
+                                          State.getConverted(Select->getFalseValue()),
+                                          Select->getName());
+    CopyDebug(NewInst, Select);
     State.recordConverted(Select, NewInst);
   } else if (PHINode *Phi = dyn_cast<PHINode>(Inst)) {
+    // PHINodes are typically not created with IRBuilder in modification passes like this.
+    // Their structure (incoming blocks) is essential.
     PHINode *NewPhi = PHINode::Create(
         getPromotedType(Phi->getType()),
         Phi->getNumIncomingValues(),
@@ -595,12 +574,13 @@ static void convertInstruction(Instruction *Inst, ConversionState &State) {
     }
     State.recordConverted(Phi, NewPhi);
   } else if (SwitchInst *Switch = dyn_cast<SwitchInst>(Inst)) {
-    Value *Condition = getClearConverted(Switch->getCondition(), Switch, State);
+    Value *Condition = getClearConverted(Switch->getCondition(), Switch->getCondition()->getType(), IRB, State);
+    // SwitchInst::Create still takes InsertBefore instruction.
     SwitchInst *NewInst = SwitchInst::Create(
         Condition,
         Switch->getDefaultDest(),
         Switch->getNumCases(),
-        Switch);
+        Switch); // Switch will be replaced, so this is okay.
     CopyDebug(NewInst, Switch);
     for (SwitchInst::CaseIt I = Switch->case_begin(),
              E = Switch->case_end();

@@ -87,6 +87,7 @@ set (GBE_SRC
     ir/reloc.cpp
     backend/context.cpp
     backend/context.hpp
+    backend/context_emit_helpers.cpp # Added new helper
     backend/program.cpp
     backend/program.hpp
     backend/program.h
@@ -123,7 +124,7 @@ set (GBE_SRC
     backend/gen_reg_allocation.cpp
     backend/gen_reg_allocation.hpp
     backend/gen_context.cpp
-    backend/gen_context.cpp
+    # backend/gen_context.cpp # Removed duplicate line
     backend/gen75_context.hpp
     backend/gen75_context.cpp
     backend/gen8_context.hpp
@@ -168,9 +169,13 @@ if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 add_library (gbe SHARED ${GBE_SRC})
 target_link_libraries(gbe ${GBE_LINK_LIBRARIES})
 add_dependencies(gbe beignet_bitcode)
+target_compile_options(gbe PRIVATE -fno-rtti)
 endif (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
 
 add_library(gbeinterp SHARED gbe_bin_interpreter.cpp)
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
+  target_compile_options(gbeinterp PRIVATE -fno-rtti)
+endif()
 
 if (LLVM_VERSION_NODOT VERSION_EQUAL 34)
   find_library(TERMINFO NAMES tinfo ncurses)

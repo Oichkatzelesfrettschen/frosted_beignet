@@ -76,12 +76,12 @@ ADD_DEFINITIONS(-DGEN7_SAMPLER_CLAMP_BORDER_WORKAROUND)
 if (COMPILER STREQUAL "GCC")
   set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -funroll-loops -fstrict-aliasing -msse2 -msse3 -mssse3 -msse4.1 -fPIC -Wall -mfpmath=sse -Wcast-align -Wl,-E")
 elseif (COMPILER STREQUAL "CLANG")
-  set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -funroll-loops -fstrict-aliasing -msse2 -msse3 -mssse3 -msse4.1 -fPIC -Wall")
+  set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS} -funroll-loops -fstrict-aliasing -msse2 -msse3 -mssse3 -msse4.1 -fPIC -Wall -Wno-deprecated-declarations")
 elseif (COMPILER STREQUAL "ICC")
   set (CMAKE_C_CXX_FLAGS "${CMAKE_C_CXX_FLAGS}  -wd2928 -Wall -fPIC -fstrict-aliasing -fp-model fast -msse4.1 -Wl,-E")
 endif ()
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_CXX_FLAGS} -std=c++0x -Wno-invalid-offsetof")
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_CXX_FLAGS} -std=c++2b -Wno-invalid-offsetof")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_CXX_FLAGS} -std=c2x")
 set (CMAKE_CXX_FLAGS_DEBUG          "-O0 -g -DGBE_DEBUG=1")
 set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DGBE_DEBUG=1")
 set (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG -DGBE_DEBUG=0")
@@ -96,9 +96,9 @@ IF (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
   Find_Package(StandaloneGbeCompiler)
 ELSE (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
   # Front end stuff we need
-  #INCLUDE(CMake/FindLLVM.cmake)
-  Find_Package(LLVM 3.3)
-  SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+  INCLUDE(CMake/FindLLVM.cmake) # Restore custom FindLLVM.cmake
+  Find_Package(LLVM 18.0)       # Change version to 18.0 to match confirmed install
+  # SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti") # Will be applied per-target
 ENDIF (USE_STANDALONE_GBE_COMPILER STREQUAL "true")
 
 

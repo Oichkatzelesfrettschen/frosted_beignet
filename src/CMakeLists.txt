@@ -177,6 +177,9 @@ SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic,--all
 
 link_directories (${LLVM_LIBRARY_DIR} ${DRM_LIBDIR} ${OPENGL_LIBDIR} ${EGL_LIBDIR})
 add_library(cl SHARED ${OPENCL_SRC})
+if (NOT (USE_STANDALONE_GBE_COMPILER STREQUAL "true"))
+  target_compile_options(cl PRIVATE -fno-rtti)
+endif()
 ADD_DEPENDENCIES(cl ${GIT_SHA1})
 target_link_libraries(
                       cl
