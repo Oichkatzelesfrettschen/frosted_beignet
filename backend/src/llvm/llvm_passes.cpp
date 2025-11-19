@@ -92,15 +92,16 @@ namespace gbe
 
   uint32_t getAlignmentByte(const ir::Unit &unit, Type* Ty)
   {
+    // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately
+    if (Ty->isVectorTy()) {
+      const VectorType* VecTy = cast<VectorType>(Ty);
+      uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
+      if (elemNum == 3) elemNum = 4; // OCL spec
+      return elemNum * getTypeByteSize(unit, VecTy->getElementType());
+    }
+
     switch (Ty->getTypeID()) {
       case Type::VoidTyID: NOT_SUPPORTED;
-      case Type::VectorTyID:
-      {
-        const VectorType* VecTy = cast<VectorType>(Ty);
-        uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
-        if (elemNum == 3) elemNum = 4; // OCL spec
-        return elemNum * getTypeByteSize(unit, VecTy->getElementType());
-      }
       case Type::PointerTyID:
       case Type::IntegerTyID:
       case Type::FloatTyID:
@@ -126,6 +127,14 @@ namespace gbe
 
   uint32_t getTypeBitSize(const ir::Unit &unit, Type* Ty)
   {
+    // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately
+    if (Ty->isVectorTy()) {
+      const VectorType* VecTy = cast<VectorType>(Ty);
+      uint32_t numElem = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
+      if(numElem == 3) numElem = 4; // OCL spec
+      return numElem * getTypeBitSize(unit, VecTy->getElementType());
+    }
+
     switch (Ty->getTypeID()) {
       case Type::VoidTyID:    NOT_SUPPORTED;
       case Type::PointerTyID: return unit.getPointerSize();
@@ -138,13 +147,6 @@ namespace gbe
       case Type::HalfTyID:    return 16;
       case Type::FloatTyID:   return 32;
       case Type::DoubleTyID:  return 64;
-      case Type::VectorTyID:
-      {
-        const VectorType* VecTy = cast<VectorType>(Ty);
-        uint32_t numElem = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
-        if(numElem == 3) numElem = 4; // OCL spec
-        return numElem * getTypeBitSize(unit, VecTy->getElementType());
-      }
       case Type::ArrayTyID:
       {
         const ArrayType* ArrTy = cast<ArrayType>(Ty);

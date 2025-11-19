@@ -96,7 +96,9 @@ namespace gbe {
 
     Scalarize() : FunctionPass(ID)
     {
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
+#if LLVM_VERSION_MAJOR >= 18
+      // LLVM 18+: Pass initialization handled automatically
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
       initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
 #else
       initializeDominatorTreePass(*PassRegistry::getPassRegistry());
@@ -175,18 +177,15 @@ namespace gbe {
     Type* GetBasicType(Type* type) {
       if(!type)
         return type;
-      switch(type->getTypeID()) {
-      case Type::VectorTyID:
-      case Type::ArrayTyID:
+      // LLVM 11+: Type::VectorTyID removed, check separately
+      if (type->isVectorTy() || type->isArrayTy())
         return GetBasicType(type->getContainedType(0));
-      default:
-        break;
-      }
       return type;
     }
 
     int GetComponentCount(const Type* type)  {
-      if (type && type->getTypeID() == Type::VectorTyID)
+      // LLVM 11+: Type::VectorTyID removed, check with isVectorTy()
+      if (type && type->isVectorTy())
         return GBE_VECTOR_GET_NUM_ELEMENTS(llvm::dyn_cast<VectorType>(type));
       else
         return 1;
@@ -650,8 +649,8 @@ namespace gbe {
           break;
         }
       } else {
-        Value *Callee = call->getCalledValue();
-        const std::string fnName = Callee->getName();
+        Value *Callee = GBE_GET_CALLED_VALUE(call);
+        const std::string fnName = std::string(Callee->getName());
         auto genIntrinsicID = intrinsicMap.find(fnName);
 
         // Get the function arguments
@@ -813,7 +812,12 @@ namespace gbe {
             Value* foo_i = getComponent(i, foo);
             assert(foo_i && "There is unhandled vector component");
             Value* idxs_i[] = {ConstantInt::get(intTy,0), ConstantInt::get(intTy,i)};
+#if LLVM_VERSION_MAJOR >= 15
+            // LLVM 15+: CreateGEP requires type parameter
+            Value* storePtr_i = builder->CreateGEP(fooTy, Alloc, idxs_i);
+#else
             Value* storePtr_i = builder->CreateGEP(Alloc, idxs_i);
+#endif
             builder->CreateStore(foo_i, storePtr_i);
           }
           vectorAlloca[foo] = Alloc;
@@ -821,8 +825,15 @@ namespace gbe {
         else Alloc = vectorAlloca[foo];
 
         Value* Idxs[] = {ConstantInt::get(intTy,0), extr->getOperand(1)};
+#if LLVM_VERSION_MAJOR >= 15
+        // LLVM 15+: CreateGEP/CreateLoad require type parameters
+        Value* getPtr = builder->CreateGEP(fooTy, Alloc, Idxs);
+        Type* scalarTy = cast<VectorType>(fooTy)->getElementType();
+        Value* loadComp = builder->CreateLoad(scalarTy, getPtr);
+#else
         Value* getPtr = builder->CreateGEP(Alloc, Idxs);
         Value* loadComp = builder->CreateLoad(getPtr);
+#endif
         extr->replaceAllUsesWith(loadComp);
         return true;
     }

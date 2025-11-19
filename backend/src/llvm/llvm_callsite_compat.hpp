@@ -65,6 +65,7 @@
 
       // Get number of arguments
       unsigned getNumArgOperands() const { return CB ? CB->arg_size() : 0; }
+      unsigned arg_size() const { return CB ? CB->arg_size() : 0; }
 
       // Get specific argument
       Value *getArgOperand(unsigned i) const { return CB ? CB->getArgOperand(i) : nullptr; }

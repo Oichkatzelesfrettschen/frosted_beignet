@@ -304,7 +304,13 @@ namespace gbe
       TYPESIZEVEC(long,8)
       TYPESIZEVEC(unsigned long,8)
       else{
+#if LLVM_VERSION_MAJOR >= 12
+        // LLVM 12+: getTypeByName() removed, iterate through struct types
+        std::string structName = "struct." + name;
+        StructType *StrTy = StructType::getTypeByName(M->getContext(), structName);
+#else
         StructType *StrTy = M->getTypeByName("struct."+name);
+#endif
         if(StrTy)
           return getTypeByteSize(unit,StrTy);
       }
@@ -359,6 +365,8 @@ namespace gbe
       auto typeID = type->getTypeID();
       if (typeID == Type::PointerTyID)
       {
+#if LLVM_VERSION_MAJOR < 15
+        // LLVM <15: Can get element type from pointer (typed pointers)
         Type *eltTy = dyn_cast<PointerType>(type)->getElementType();
         if (eltTy->isStructTy()) {
           StructType *strTy = dyn_cast<StructType>(eltTy);
@@ -366,7 +374,25 @@ namespace gbe
               strstr(strTy->getName().data(), "sampler"))
             type = Type::getInt32Ty(value->getContext());
         }
+#else
+        // LLVM 15+: Opaque pointers - cannot get element type from pointer
+        // Sampler type handling done via other means (metadata, attributes)
+#endif
       }
+
+      // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately
+      if (type->isVectorTy()) {
+        auto vectorType = cast<VectorType>(type);
+        auto elementType = vectorType->getElementType();
+        auto elementTypeID = elementType->getTypeID();
+        if (elementTypeID != Type::IntegerTyID &&
+            elementTypeID != Type::FloatTyID &&
+            elementTypeID != Type::HalfTyID &&
+            elementTypeID != Type::DoubleTyID)
+          GBE_ASSERTM(false, "Vectors of elements are not supported");
+          return this->_newScalar(value, key, elementType, index, uniform);
+      }
+
       switch (typeID) {
         case Type::IntegerTyID:
         case Type::FloatTyID:
@@ -376,19 +402,6 @@ namespace gbe
           GBE_ASSERT(index == 0);
           return this->_newScalar(value, key, type, index, uniform);
           break;
-        case Type::VectorTyID:
-        {
-          auto vectorType = cast<VectorType>(type);
-          auto elementType = vectorType->getElementType();
-          auto elementTypeID = elementType->getTypeID();
-          if (elementTypeID != Type::IntegerTyID &&
-              elementTypeID != Type::FloatTyID &&
-              elementTypeID != Type::HalfTyID &&
-              elementTypeID != Type::DoubleTyID)
-            GBE_ASSERTM(false, "Vectors of elements are not supported");
-            return this->_newScalar(value, key, elementType, index, uniform);
-          break;
-        }
         case Type::StructTyID:
         {
           auto structType = cast<StructType>(type);
@@ -575,7 +588,9 @@ namespace gbe
         has_errors(false),
         legacyMode(true)
     {
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
+#if LLVM_VERSION_MAJOR >= 18
+      // LLVM 18+: Pass initialization handled automatically
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
       initializeLoopInfoWrapperPassPass(*PassRegistry::getPassRegistry());
 #else
       initializeLoopInfoPass(*PassRegistry::getPassRegistry());
@@ -1278,8 +1293,8 @@ namespace gbe
   }
 
   void GenWriter::assignBti(Function &F) {
-    Module::GlobalListType &globalList = const_cast<Module::GlobalListType &> (TheModule->getGlobalList());
-    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+    // LLVM 17+: getGlobalList() is private, use global_begin/global_end iterators
+    for(auto i = TheModule->global_begin(); i != TheModule->global_end(); i ++) {
       GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
 
@@ -1392,10 +1407,18 @@ namespace gbe
           // newLocBase = (pointer - origin) + base_start
           Value *diff = Builder.CreateSub(v1, v2);
           Value *newLocBase = Builder.CreateAdd(v3, diff);
+#if LLVM_VERSION_MAJOR >= 15
+          // LLVM 15+: Opaque pointers - use PointerType::getUnqual()
+          newLocBase = Builder.CreateIntToPtr(newLocBase, PointerType::getUnqual(ptr->getContext()));
+          // newLocBti = (pointer - origin) + bti_start
+          Value *newLocBti = Builder.CreateAdd(v4, diff);
+          newLocBti = Builder.CreateIntToPtr(newLocBti, PointerType::getUnqual(ptr->getContext()));
+#else
           newLocBase = Builder.CreateIntToPtr(newLocBase, Type::getInt32PtrTy(ptr->getContext()));
           // newLocBti = (pointer - origin) + bti_start
           Value *newLocBti = Builder.CreateAdd(v4, diff);
           newLocBti = Builder.CreateIntToPtr(newLocBti, Type::getInt32PtrTy(ptr->getContext()));
+#endif
 
           // later GenWriter instruction translation needs this map info
           BtiValueMap.insert(std::make_pair(newLocBti, ConstantInt::get(Type::getInt32Ty(ptr->getContext()), BTI_PRIVATE)));
@@ -1405,8 +1428,14 @@ namespace gbe
           pointerBaseMap.insert(std::make_pair(newLocBase, ConstantPointerNull::get(cast<PointerType>(pointerOp->getType()))));
 
           if (isLoad) {
+#if LLVM_VERSION_MAJOR >= 15
+            // LLVM 15+: CreateLoad requires type parameter for opaque pointers
+            Value *loadedBase = Builder.CreateLoad(Type::getInt32Ty(ptr->getContext()), newLocBase);
+            Value *loadedBti = Builder.CreateLoad(Type::getInt32Ty(ptr->getContext()), newLocBti);
+#else
             Value *loadedBase = Builder.CreateLoad(newLocBase);
             Value *loadedBti = Builder.CreateLoad(newLocBti);
+#endif
 
             BtiValueMap.insert(std::make_pair(theUser, loadedBti));
             pointerBaseMap.insert(std::make_pair(theUser, loadedBase));
@@ -1433,9 +1462,8 @@ namespace gbe
     // its direct mixed-pointer parent as it's pointer origin.
 
     std::vector<Value *> revisit;
-    // GlobalVariable
-    Module::GlobalListType &globalList = const_cast<Module::GlobalListType &> (TheModule->getGlobalList());
-    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+    // GlobalVariable - LLVM 17+: use global_begin/global_end iterators
+    for(auto i = TheModule->global_begin(); i != TheModule->global_end(); i ++) {
       GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
       findPointerEscape(&v, mixedPtr, true, revisit);
@@ -1530,7 +1558,7 @@ namespace gbe
             EltTy = getEltType(EltTy, TypeIndex);
         }
 
-        ir::Constant cc = unit.getConstantSet().getConstant(pointer->getName());
+        ir::Constant cc = unit.getConstantSet().getConstant(std::string(pointer->getName()));
         unsigned int defOffset = cc.getOffset();
         relocs.push_back(ir::RelocEntry(offset, defOffset + constantOffset));
 
@@ -1545,7 +1573,7 @@ namespace gbe
       return;
     }
     if (isa<GlobalVariable>(c)) {
-      ir::Constant cc = unit.getConstantSet().getConstant(c->getName());
+      ir::Constant cc = unit.getConstantSet().getConstant(std::string(c->getName()));
       unsigned int defOffset = cc.getOffset();
 
       relocs.push_back(ir::RelocEntry(offset, defOffset));
@@ -1564,6 +1592,18 @@ namespace gbe
       offset += size;
       return;
     }
+
+    // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately
+    if (type->isVectorTy()) {
+      const ConstantDataSequential *cds = dyn_cast<ConstantDataSequential>(c);
+      const VectorType *vecTy = cast<VectorType>(type);
+      GBE_ASSERT(cds);
+      getSequentialData(cds, mem, offset);
+      if(GBE_VECTOR_GET_NUM_ELEMENTS(vecTy) == 3) // OCL spec require align to vec4
+        offset += getTypeBitSize(unit, vecTy->getElementType()) / 8;
+      return;
+    }
+
     switch(id) {
       case Type::TypeID::StructTyID:
         {
@@ -1606,16 +1646,6 @@ namespace gbe
               offset += padding;
             }
           }
-          break;
-        }
-      case Type::TypeID::VectorTyID:
-        {
-          const ConstantDataSequential *cds = dyn_cast<ConstantDataSequential>(c);
-          const VectorType *vecTy = cast<VectorType>(type);
-          GBE_ASSERT(cds);
-          getSequentialData(cds, mem, offset);
-          if(GBE_VECTOR_GET_NUM_ELEMENTS(vecTy) == 3) // OCL spec require align to vec4
-            offset += getTypeByteSize(unit, vecTy->getElementType());
           break;
         }
       case Type::TypeID::IntegerTyID:
@@ -1669,23 +1699,28 @@ namespace gbe
     return (addrSpace == 2 || addrSpace == 1 || addrSpace == 0);
   }
   void GenWriter::collectGlobalConstant(void) const {
-    const Module::GlobalListType &globalList = TheModule->getGlobalList();
     // The first pass just create the global variable constants
-    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+    // LLVM 17+: use global_begin/global_end iterators
+    for(auto i = TheModule->global_begin(); i != TheModule->global_end(); i ++) {
       const GlobalVariable &v = *i;
       const char *name = v.getName().data();
 
       vector<ir::RelocEntry> relocs;
 
       if(isProgramGlobal(v)) {
+#if LLVM_VERSION_MAJOR >= 15
+        // LLVM 15+: Opaque pointers - use getValueType() for GlobalVariable
+        Type * type = v.getValueType();
+#else
         Type * type = v.getType()->getPointerElementType();
+#endif
         uint32_t size = getTypeByteSize(unit, type);
         uint32_t alignment = getAlignmentByte(unit, type);
         unit.newConstant(name, size, alignment);
       }
     }
     // the second pass to initialize the data
-    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+    for(auto i = TheModule->global_begin(); i != TheModule->global_end(); i ++) {
       const GlobalVariable &v = *i;
       const char *name = v.getName().data();
 
@@ -1927,6 +1962,16 @@ namespace gbe
   void GenWriter::newRegister(Value *value, Value *key, bool uniform) {
     auto type = value->getType();
     auto typeID = type->getTypeID();
+
+    // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately
+    if (type->isVectorTy()) {
+      auto vectorType = cast<VectorType>(type);
+      const uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
+      for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
+        regTranslator.newScalar(value, key, elemID, uniform);
+      return;
+    }
+
     switch (typeID) {
       case Type::IntegerTyID:
       case Type::FloatTyID:
@@ -1935,14 +1980,6 @@ namespace gbe
       case Type::PointerTyID:
         regTranslator.newScalar(value, key, 0, uniform);
         break;
-      case Type::VectorTyID:
-      {
-        auto vectorType = cast<VectorType>(type);
-        const uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
-        for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
-          regTranslator.newScalar(value, key, elemID, uniform);
-        break;
-      }
       case Type::StructTyID:
       {
         auto structType = cast<StructType>(type);
@@ -2970,8 +3007,8 @@ namespace gbe
   void GenWriter::allocateGlobalVariableRegister(Function &F)
   {
     // Allocate a address register for each global variable
-    const Module::GlobalListType &globalList = TheModule->getGlobalList();
-    for(auto i = globalList.begin(); i != globalList.end(); i ++) {
+    // LLVM 17+: use global_begin/global_end iterators
+    for(auto i = TheModule->global_begin(); i != TheModule->global_end(); i ++) {
       const GlobalVariable &v = *i;
       if(!v.isConstantUsed()) continue;
 
@@ -3009,7 +3046,7 @@ namespace gbe
         } else {
           this->newRegister(const_cast<GlobalVariable*>(&v));
           ir::Register reg = regTranslator.getScalar(const_cast<GlobalVariable*>(&v), 0);
-          ir::Constant &con = unit.getConstantSet().getConstant(v.getName());
+          ir::Constant &con = unit.getConstantSet().getConstant(std::string(v.getName()));
           if (!legacyMode) {
             ir::Register regload = ctx.reg(getFamily(getType(ctx, v.getType())));
             ctx.LOADI(getType(ctx, v.getType()), regload, ctx.newIntegerImmediate(con.getOffset(), getType(ctx, v.getType())));
@@ -3074,14 +3111,16 @@ namespace gbe
 
 
   static unsigned getChildNo(BasicBlock *bb) {
-    TerminatorInst *term = bb->getTerminator();
+    // LLVM 16+: TerminatorInst removed, use Instruction* instead
+    Instruction *term = bb->getTerminator();
     return term->getNumSuccessors();
   }
 
   // return NULL if index out-range of children number
   static BasicBlock *getChildPossible(BasicBlock *bb, unsigned index) {
 
-    TerminatorInst *term = bb->getTerminator();
+    // LLVM 16+: TerminatorInst removed, use Instruction* instead
+    Instruction *term = bb->getTerminator();
     unsigned childNo = term->getNumSuccessors();
     BasicBlock *child = NULL;
     if(index < childNo) {
@@ -3182,6 +3221,8 @@ namespace gbe
       }
     }
 
+#if LLVM_VERSION_MAJOR < 17
+    // LLVM <17: Can manipulate BasicBlockList directly
     Function::BasicBlockListType &bbList = F.getBasicBlockList();
     for (std::vector<BasicBlock *>::iterator iter = sorted.begin(); iter != sorted.end(); ++iter) {
       (*iter)->removeFromParent();
@@ -3190,6 +3231,13 @@ namespace gbe
     for (std::vector<BasicBlock *>::reverse_iterator iter = sorted.rbegin(); iter != sorted.rend(); ++iter) {
       bbList.push_back(*iter);
     }
+#else
+    // LLVM 17+: getBasicBlockList() is private, use moveBefore() to reorder
+    // Move blocks in reverse order to the beginning of the function
+    for (std::vector<BasicBlock *>::reverse_iterator iter = sorted.rbegin(); iter != sorted.rend(); ++iter) {
+      (*iter)->moveBefore(&F.front());
+    }
+#endif
   }
 
   void GenWriter::emitFunction(Function &F)
@@ -3203,7 +3251,7 @@ namespace gbe
         GBE_ASSERTM(false, "Unsupported calling convention");
     }
 
-    ctx.startFunction(F.getName());
+    ctx.startFunction(std::string(F.getName()));
 
     ir::Function &fn = ctx.getFunction();
     this->regTranslator.clear();
@@ -3801,10 +3849,10 @@ namespace gbe
 
   void GenWriter::regAllocateCallInst(CallInst &I) {
     Value *dst = &I;
-    Value *Callee = I.getCalledValue();
+    Value *Callee = GBE_GET_CALLED_VALUE(&I);
     GBE_ASSERT(ctx.getFunction().getProfile() == ir::PROFILE_OCL);
-    GBE_ASSERT(isa<InlineAsm>(I.getCalledValue()) == false);
-    if(I.getNumArgOperands()) GBE_ASSERT(I.hasStructRetAttr() == false);
+    GBE_ASSERT(isa<InlineAsm>(GBE_GET_CALLED_VALUE(&I)) == false);
+    if(I.arg_size()) GBE_ASSERT(I.hasStructRetAttr() == false);
 
     // We only support a small number of intrinsics right now
     if (Function *F = I.getCalledFunction()) {
@@ -3861,7 +3909,7 @@ namespace gbe
       }
     }
     // Get the name of the called function and handle it
-    const std::string fnName = Callee->stripPointerCasts()->getName();
+    const std::string fnName = std::string(Callee->stripPointerCasts()->getName());
     auto genIntrinsicID = intrinsicMap.find(fnName);
     switch (genIntrinsicID) {
       case GEN_OCL_GET_GROUP_ID0:
@@ -4250,7 +4298,12 @@ namespace gbe
     payloadNum++;
     payload.push_back(this->getRegister(I.getNewValOperand()));
     payloadNum++;
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - get type from value operand instead
+    ir::Type type = getType(ctx, I.getNewValOperand()->getType());
+#else
     ir::Type type = getType(ctx, llvmPtr->getType()->getPointerElementType());
+#endif
     const ir::Tuple payloadTuple = payloadNum == 0 ?
                                    ir::Tuple(0) :
                                    ctx.arrayTuple(&payload[0], payloadNum);
@@ -4294,7 +4347,12 @@ namespace gbe
 
     payload.push_back(this->getRegister(I.getOperand(1)));
     payloadNum++;
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - get type from value operand instead
+    ir::Type type = getType(ctx, I.getOperand(1)->getType());
+#else
     ir::Type type = getType(ctx, llvmPtr->getType()->getPointerElementType());
+#endif
     const ir::Tuple payloadTuple = payloadNum == 0 ?
                                    ir::Tuple(0) :
                                    ctx.arrayTuple(&payload[0], payloadNum);
@@ -4341,11 +4399,19 @@ namespace gbe
     vector<ir::Register> payload;
     AI++;
 
+    // Save first payload value for type inference (opaque pointers)
+    Value *firstPayloadValue = (AI != AE) ? AI->get() : nullptr;
+
     while(AI != AE) {
       payload.push_back(this->getRegister(*(AI++)));
       payloadNum++;
     }
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - get type from first payload value
+    ir::Type type = firstPayloadValue ? getType(ctx, firstPayloadValue->getType()) : ir::TYPE_U32;
+#else
     ir::Type type = getType(ctx, llvmPtr->getType()->getPointerElementType());
+#endif
     const ir::Tuple payloadTuple = payloadNum == 0 ?
                                    ir::Tuple(0) :
                                    ctx.arrayTuple(&payload[0], payloadNum);
@@ -4884,8 +4950,8 @@ namespace gbe
         }
       } else {
         // Get the name of the called function and handle it
-        Value *Callee = I.getCalledValue();
-        const std::string fnName = Callee->stripPointerCasts()->getName();
+        Value *Callee = GBE_GET_CALLED_VALUE(&I);
+        const std::string fnName = std::string(Callee->stripPointerCasts()->getName());
         auto genIntrinsicID = intrinsicMap.find(fnName);
 
         // Get the function arguments
@@ -5750,7 +5816,12 @@ namespace gbe
   }
   void GenWriter::emitAllocaInst(AllocaInst &I) {
     Value *src = I.getOperand(0);
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - use getAllocatedType() instead
+    Type *elemType = I.getAllocatedType();
+#else
     Type *elemType = I.getType()->getElementType();
+#endif
     ir::ImmediateIndex immIndex;
     uint32_t elementSize = getTypeByteSize(unit, elemType);
 
