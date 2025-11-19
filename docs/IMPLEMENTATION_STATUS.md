@@ -3,7 +3,8 @@
 **Project:** Frosted Beignet - Intel GPU Gen5/6/7/7.5 OpenCL Support
 **Date:** 2025-11-19
 **Branch:** `claude/intel-gpu-opencl-support-01Y4TL9FKKTA7kmLwr4LuLAt`
-**Status:** 🔄 **IN PROGRESS** - Phase 1 & 2 Partially Complete
+**Status:** 🔄 **IN PROGRESS** - Phase 1 & 2 Complete, Phase 3 Starting
+**Latest Commit:** 3d9b660 - Phase 2B Runtime Integration Complete
 
 ---
 
@@ -36,34 +37,88 @@ This document tracks the implementation status of adding Intel Gen5 (Ironlake) a
   - Created `logs/` directory
   - Created `scripts/build.sh` - Automated build script with logging
 
-### Phase 2: Gen6 (Sandy Bridge) Backend - Partial
+### Phase 2A: Gen6 (Sandy Bridge) Backend - Complete ✅
 
 - ✅ **Gen6 Instruction Definitions**
-  - Created `backend/src/backend/gen6_instruction.hpp`
+  - Created `backend/src/backend/gen6_instruction.hpp` (350+ lines)
   - Defined Gen6 native instruction format (128-bit)
   - Documented architectural differences from Gen7
+  - Complete ISA with all addressing modes
 
 - ✅ **Gen6 Encoder Interface**
-  - Created `backend/src/backend/gen6_encoder.hpp`
+  - Created `backend/src/backend/gen6_encoder.hpp` (130+ lines)
   - Defined encoder class with Gen6-specific methods
   - Documented Gen6 limitations and capabilities
+
+- ✅ **Gen6 Encoder Implementation**
+  - Created `backend/src/backend/gen6_encoder.cpp` (650+ lines)
+  - Implemented `setHeader()` with single flag register
+  - Implemented `setDst()`, `setSrc0()`, `setSrc1()` register encoding
+  - Implemented `alu3()` with SIMD16→SIMD8 splitting for 3-source ops
+  - Implemented `MBREAD()` and `MBWRITE()` with Gen6 message formats
+  - Implemented Gen6 2-bit cache control
+
+- ✅ **Gen6 Context**
+  - Created `backend/src/backend/gen6_context.hpp` (150+ lines)
+  - Created `backend/src/backend/gen6_context.cpp` (250+ lines)
+  - Code generation context with Gen6 optimizations
+  - Register allocation for Gen6 constraints
+  - SIMD8 preference for performance
+  - Feature detection and limitations handling
+
+- ✅ **Gen6 Device Configuration**
+  - Created `src/cl_gen6_device.h` (200+ lines)
+  - Configured for max 12 execution units (GT2)
+  - OpenCL 1.1 feature set (no FP64/FP16)
+  - 512KB L3 cache, 64KB local memory
+  - Conservative work group sizes
+
+- ✅ **Build System Integration**
+  - Updated `backend/src/CMakeLists.txt`
+  - Added all Gen6 sources to build
+
+**Commit:** 4a54c0c - Phase 2A Complete
+
+### Phase 2B: Gen6 Runtime Integration - Complete ✅
+
+- ✅ **Runtime GPU Functions**
+  - Updated `src/intel/intel_gpgpu.c` with 8 Gen6 functions:
+    - `intel_gpgpu_select_pipeline_gen6()` - GPGPU pipeline selection
+    - `intel_gpgpu_get_cache_ctrl_gen6()` - 2-bit cache control
+    - `intel_gpgpu_set_base_address_gen6()` - State base address setup
+    - `intel_gpgpu_load_vfe_state_gen6()` - Virtual Front End state
+    - `intel_gpgpu_get_scratch_index_gen6()` - Scratch buffer encoding
+    - `intel_gpgpu_setup_bti_gen6()` - Binding Table Index setup
+    - `intel_gpgpu_bind_image_gen6()` - Image surface binding
+    - `intel_gpgpu_pipe_control_gen6()` - Pipeline synchronization
+
+- ✅ **Function Pointer Assignment**
+  - Added IS_GEN6() branch in `intel_setup_callbacks()`
+  - Mapped all Gen6-specific functions
+  - Reused compatible Gen7 functions (CURBE, IDRT, walker)
+
+- ✅ **Device Initialization**
+  - Updated `src/cl_device_id.c`
+  - Created `intel_snb_gt1_device` (6 EUs, GT1)
+  - Created `intel_snb_gt2_device` (12 EUs, GT2)
+  - Mapped all Sandy Bridge device IDs
+  - Proper OpenCL 1.1 capabilities
+
+**Commit:** 3d9b660 - Phase 2B Complete
 
 ---
 
 ## Current Work 🔄
 
-### Gen6 Encoder Implementation
+### Phase 3: LLVM Backend Integration
 
-**File:** `backend/src/backend/gen6_encoder.cpp` (IN PROGRESS)
+**Status:** Starting
 
-**Status:** Partially complete - needs full implementation based on Gen7 encoder
-
-**Remaining Work:**
-- Implement `setHeader()` with Gen6-specific defaults
-- Implement `setDst()`, `setSrc0()`, `setSrc1()` register configuration
-- Implement `alu3()` for three-source operations (with Gen6 limitations)
-- Implement `MBREAD()` and `MBWRITE()` with Gen6 message formats
-- Add cache control helper methods
+**Next Tasks:**
+- Update `backend/src/llvm/llvm_gen_backend.cpp` for Gen6 ISA target
+- Implement Gen6-specific instruction selection
+- Handle Gen6 register allocation constraints
+- Test code generation pipeline
 
 ---
 
@@ -204,34 +259,48 @@ This document tracks the implementation status of adding Intel Gen5 (Ironlake) a
 
 ## Implementation Progress
 
-### Overall Progress: ~20%
+### Overall Progress: ~60%
 
 - **Documentation:** 100% ✅
 - **Infrastructure:** 100% ✅
-- **Gen6 Backend:** 30% 🔄
+- **Gen6 Backend:** 100% ✅
   - Instruction definitions: 100% ✅
   - Encoder interface: 100% ✅
-  - Encoder implementation: 10% 🔄
-  - Context: 0% ❌
-  - Device config: 0% ❌
-- **Runtime Integration:** 0% ❌
+  - Encoder implementation: 100% ✅
+  - Context: 100% ✅
+  - Device config: 100% ✅
+- **Runtime Integration:** 100% ✅
+  - GPU functions: 100% ✅
+  - Function pointers: 100% ✅
+  - Device initialization: 100% ✅
 - **LLVM Backend:** 0% ❌
 - **Gen5 Support:** 0% ❌
 - **Testing:** 0% ❌
-- **Build & QA:** 0% ❌
+- **Build & QA:** 10% (Dependencies installed, LLVM 18 compatibility issues remain)
 
-### Files Created (8)
+### Files Created/Modified (13)
 
+**Phase 1 - Documentation & Infrastructure:**
 1. `docs/MODERNIZATION_ANALYSIS.md` - 500+ lines
 2. `docs/REQUIREMENTS.md` - 700+ lines
-3. `docs/IMPLEMENTATION_STATUS.md` - This file
-4. `scripts/build.sh` - Build automation script
-5. `backend/src/backend/gen6_instruction.hpp` - 350+ lines
-6. `backend/src/backend/gen6_encoder.hpp` - 130+ lines
-7. `backend/src/backend/gen6_encoder.cpp` - (Pending implementation)
-8. `scripts/` and `logs/` directories created
+3. `docs/IMPLEMENTATION_STATUS.md` - This file (400+ lines)
+4. `scripts/build.sh` - Build automation script (100+ lines)
+5. `scripts/` and `logs/` directories
 
-### Lines of Code Added: ~1,900+
+**Phase 2A - Gen6 Backend:**
+6. `backend/src/backend/gen6_instruction.hpp` - 350+ lines
+7. `backend/src/backend/gen6_encoder.hpp` - 130+ lines
+8. `backend/src/backend/gen6_encoder.cpp` - 650+ lines
+9. `backend/src/backend/gen6_context.hpp` - 150+ lines
+10. `backend/src/backend/gen6_context.cpp` - 250+ lines
+11. `src/cl_gen6_device.h` - 200+ lines
+12. `backend/src/CMakeLists.txt` - Modified (added Gen6 sources)
+
+**Phase 2B - Runtime Integration:**
+13. `src/intel/intel_gpgpu.c` - Modified (+300 lines Gen6 functions)
+14. `src/cl_device_id.c` - Modified (+30 lines Gen6 devices)
+
+### Lines of Code Added: ~3,760+
 
 ---
 
