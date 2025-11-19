@@ -182,12 +182,32 @@ namespace gbe
 
   Type* getEltType(Type* eltTy, uint32_t index) {
     Type *elementType = NULL;
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - cannot get element type from pointer
+    // For opaque pointers, caller must provide type from context (load/store/GEP)
+    if(isa<PointerType>(eltTy)) {
+      // Return null for opaque pointers - caller must handle
+      return NULL;
+    }
+#else
     if (PointerType* ptrType = dyn_cast<PointerType>(eltTy))
       elementType = ptrType->getElementType();
+#endif
+#if LLVM_VERSION_MAJOR >= 11
+    // LLVM 11+: SequentialType removed, handle ArrayType and VectorType separately
+    else if(ArrayType * arrType = dyn_cast<ArrayType>(eltTy))
+      elementType = arrType->getElementType();
+    else if(VectorType * vecType = dyn_cast<VectorType>(eltTy))
+      elementType = vecType->getElementType();
+    // LLVM 11+: CompositeType removed, handle StructType directly
+    else if(StructType * structTy = dyn_cast<StructType>(eltTy))
+      elementType = structTy->getTypeAtIndex(index);
+#else
     else if(SequentialType * seqType = dyn_cast<SequentialType>(eltTy))
       elementType = seqType->getElementType();
     else if(CompositeType * compTy= dyn_cast<CompositeType>(eltTy))
       elementType = compTy->getTypeAtIndex(index);
+#endif
     GBE_ASSERT(elementType);
     return elementType;
   }
