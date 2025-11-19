@@ -232,7 +232,7 @@ namespace gbe
     if (llvmType->isVectorTy() == true) {
       VectorType *vectorType = cast<VectorType>(llvmType);
       Type *elementType = vectorType->getElementType();
-      elemNum = vectorType->getNumElements();
+      elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
       if (useUnsigned)
         type = getUnsignedType(ctx, elementType);
       else
@@ -1614,7 +1614,7 @@ namespace gbe
           const VectorType *vecTy = cast<VectorType>(type);
           GBE_ASSERT(cds);
           getSequentialData(cds, mem, offset);
-          if(vecTy->getNumElements() == 3) // OCL spec require align to vec4
+          if(GBE_VECTOR_GET_NUM_ELEMENTS(vecTy) == 3) // OCL spec require align to vec4
             offset += getTypeByteSize(unit, vecTy->getElementType());
           break;
         }
@@ -1741,7 +1741,7 @@ namespace gbe
       return ctx.newImmediate(data);
     } else {
       vector<P> array;
-      for(uint32_t i = 0; i < seq->getNumElements(); i++)
+      for(uint32_t i = 0; i < GBE_VECTOR_GET_NUM_ELEMENTS(seq); i++)
         array.push_back(GET_EFFECT_DATA(seq, i, tid));
       return ctx.newImmediate((T*)&array[0], array.size());
     }
@@ -1938,7 +1938,7 @@ namespace gbe
       case Type::VectorTyID:
       {
         auto vectorType = cast<VectorType>(type);
-        const uint32_t elemNum = vectorType->getNumElements();
+        const uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
         for (uint32_t elemID = 0; elemID < elemNum; ++elemID)
           regTranslator.newScalar(value, key, elemID, uniform);
         break;
@@ -2160,7 +2160,7 @@ namespace gbe
       if (vtype->isVectorTy()) {
         VectorType *vectorType = cast<VectorType>(vtype);
         stype = vectorType->getElementType();
-        elemNum = vectorType->getNumElements();
+        elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
       }
 
       std::string typeName = getTypeName(ctx, stype, signValue);
@@ -2426,7 +2426,7 @@ namespace gbe
           ir::Register reg = getRegister(&*I, 0);
           Type *elemType = vectorType->getElementType();
           const uint32_t elemSize = getTypeByteSize(unit, elemType);
-          const uint32_t elemNum = vectorType->getNumElements();
+          const uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
           //vector's elemType always scalar type
           ctx.input(argName, ir::FunctionArgument::VALUE, reg, llvmInfo, getTypeByteSize(unit, type), getAlignmentByte(unit, type), 0);
 
@@ -3676,7 +3676,7 @@ namespace gbe
   void GenWriter::emitInsertElement(InsertElementInst &I) {
     const VectorType *type = dyn_cast<VectorType>(I.getType());
     GBE_ASSERT(type);
-    const int elemNum = type->getNumElements();
+    const int elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(type);
 
     Value *vec = I.getOperand(0);
     Value *value = I.getOperand(1);
@@ -5906,7 +5906,7 @@ namespace gbe
     if (!isScalarType(llvmType)) {
       VectorType *vectorType = cast<VectorType>(llvmType);
       elemType = vectorType->getElementType();
-      elemNum = vectorType->getNumElements();
+      elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
     }
     const ir::Type type = getType(ctx, elemType);
 
@@ -5938,7 +5938,7 @@ namespace gbe
     Value *llvmPtr = I.getPointerOperand();
     Value *llvmValues = getLoadOrStoreValue(I);
     Type *llvmType = llvmValues->getType();
-    dwAligned = (I.getAlignment() % 4) == 0;
+    dwAligned = (GBE_GET_ALIGNMENT(I) % 4) == 0;
     addrSpace = addressSpaceLLVMToGen(llvmPtr->getType()->getPointerAddressSpace());
     const ir::Register pointer = writer->getRegister(llvmPtr);
     const ir::RegisterFamily pointerFamily = ctx.getPointerFamily();
@@ -6002,7 +6002,7 @@ namespace gbe
       Type *elemType = vectorType->getElementType();
 
       // We follow OCL spec and support 2,3,4,8,16 elements only
-      uint32_t elemNum = vectorType->getNumElements();
+      uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(vectorType);
       GBE_ASSERTM(elemNum == 2 || elemNum == 3 || elemNum == 4 || elemNum == 8 || elemNum == 16,
                   "Only vectors of 2,3,4,8 or 16 elements are supported");
 

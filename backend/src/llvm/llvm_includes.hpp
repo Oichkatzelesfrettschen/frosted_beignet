@@ -134,6 +134,26 @@
   #include "llvm/IR/CallSite.h"
   #define GBE_GET_CALLED_VALUE(CI) (CI)->getCalledValue()
 #endif
+
+// LLVM-12+ fix: VectorType::getNumElements() removed for scalable vector support
+// OpenCL uses fixed-width vectors only (vec2, vec3, vec4, etc.)
+#if LLVM_VERSION_MAJOR >= 12
+  #include "llvm/IR/DerivedTypes.h"
+  // For fixed-width vectors, cast to FixedVectorType
+  #define GBE_VECTOR_GET_NUM_ELEMENTS(VT) (cast<llvm::FixedVectorType>(VT)->getNumElements())
+#else
+  // For LLVM 11 and earlier
+  #define GBE_VECTOR_GET_NUM_ELEMENTS(VT) ((VT)->getNumElements())
+#endif
+
+// LLVM-11+ fix: LoadInst/StoreInst::getAlignment() → getAlign().value()
+// getAlignment() deprecated in LLVM 10, removed in LLVM 11+
+#if LLVM_VERSION_MAJOR >= 11
+  #define GBE_GET_ALIGNMENT(I) ((I).getAlign().value())
+#else
+  #define GBE_GET_ALIGNMENT(I) ((I).getAlignment())
+#endif
+
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IRPrintingPasses.h"

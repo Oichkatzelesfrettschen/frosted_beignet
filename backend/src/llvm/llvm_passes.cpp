@@ -97,7 +97,7 @@ namespace gbe
       case Type::VectorTyID:
       {
         const VectorType* VecTy = cast<VectorType>(Ty);
-        uint32_t elemNum = VecTy->getNumElements();
+        uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
         if (elemNum == 3) elemNum = 4; // OCL spec
         return elemNum * getTypeByteSize(unit, VecTy->getElementType());
       }
@@ -141,7 +141,7 @@ namespace gbe
       case Type::VectorTyID:
       {
         const VectorType* VecTy = cast<VectorType>(Ty);
-        uint32_t numElem = VecTy->getNumElements();
+        uint32_t numElem = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
         if(numElem == 3) numElem = 4; // OCL spec
         return numElem * getTypeBitSize(unit, VecTy->getElementType());
       }

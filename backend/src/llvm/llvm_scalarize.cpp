@@ -187,7 +187,7 @@ namespace gbe {
 
     int GetComponentCount(const Type* type)  {
       if (type && type->getTypeID() == Type::VectorTyID)
-        return llvm::dyn_cast<VectorType>(type)->getNumElements();
+        return GBE_VECTOR_GET_NUM_ELEMENTS(llvm::dyn_cast<VectorType>(type));
       else
         return 1;
     }
