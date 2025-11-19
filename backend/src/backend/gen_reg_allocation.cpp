@@ -53,20 +53,8 @@ namespace gbe
 
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
-  /*! Interval as used in linear scan allocator. Basically, stores the first and
-   *  the last instruction where the register is alive
-   */
-  struct GenRegInterval {
-    INLINE GenRegInterval(ir::Register reg) :
-      reg(reg), minID(INT_MAX), maxID(-INT_MAX), accessCount(0),
-      blockID(-1), conflictReg(0), b3OpAlign(0), usedHole(false), isHole(false){}
-    ir::Register reg;     //!< (virtual) register of the interval
-    int32_t minID, maxID; //!< Starting and ending points
-    int32_t accessCount;
-    int32_t blockID; //!< blockID for in-block regs that can reuse hole
-    ir::Register conflictReg; // < has banck conflict with this register
-    bool b3OpAlign, usedHole, isHole;
-  };
+  // Phase 5A: GenRegInterval now defined in backend/gen_reg_interval.hpp
+  // (included via gen_reg_allocation_intervals.hpp)
 
   struct SpillInterval {
     SpillInterval(const ir::Register r, float c):

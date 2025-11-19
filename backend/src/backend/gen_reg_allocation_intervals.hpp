@@ -37,14 +37,12 @@
 #define __GBE_GEN_REG_ALLOCATION_INTERVALS_HPP__
 
 #include "ir/register.hpp"
+#include "backend/gen_reg_interval.hpp"  // Phase 5A: Complete type needed for std::vector
 #include <vector>
 #include <algorithm>
 #include <cstdint>
 
 namespace gbe {
-
-// Forward declaration
-struct GenRegInterval;
 
 /**
  * @brief Cache-friendly interval storage with index-based sorting

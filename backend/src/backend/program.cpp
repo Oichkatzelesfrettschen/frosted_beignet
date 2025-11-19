@@ -694,9 +694,9 @@ namespace gbe {
 #endif
                 );
 
+    // LLVM-18 fix: CreateFromArgs now requires ArrayRef
     clang::CompilerInvocation::CreateFromArgs(*CI,
-                                              &args[0],
-                                              &args[0] + args.size(),
+                                              llvm::ArrayRef<const char*>(&args[0], args.size()),
                                               Diags);
     // Create the compiler instance
     clang::CompilerInstance Clang;
@@ -762,7 +762,7 @@ namespace gbe {
       std::string err;
       llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
                                     err,
-                                    llvm::sys::fs::F_None
+                                    llvm::sys::fs::OF_None
                                     );
 
       if (err.empty()) {
@@ -774,7 +774,7 @@ namespace gbe {
       std::string err;
       llvm::raw_fd_ostream ostream (dumpSPIRBinaryName.c_str(),
                                     err,
-                                    llvm::sys::fs::F_None
+                                    llvm::sys::fs::OF_None
                                     );
       if (err.empty())
         llvm::WriteBitcodeToFile(*out_module, ostream);
@@ -783,7 +783,7 @@ namespace gbe {
     if (!dumpLLVMFileName.empty()) {
       std::error_code err;
       llvm::raw_fd_ostream ostream (dumpLLVMFileName.c_str(),
-                                    err, llvm::sys::fs::F_None);
+                                    err, llvm::sys::fs::OF_None);
       if (!err) {
         (*out_module)->print(ostream, 0);
       } //Otherwise, you'll have to make do without the dump.
@@ -792,7 +792,7 @@ namespace gbe {
     if (!dumpSPIRBinaryName.empty()) {
       std::error_code err;
       llvm::raw_fd_ostream ostream (dumpSPIRBinaryName.c_str(),
-                                    err, llvm::sys::fs::F_None);
+                                    err, llvm::sys::fs::OF_None);
       if (!err)
 #if LLVM_VERSION_MAJOR<7
         llvm::WriteBitcodeToFile(*out_module, ostream);
@@ -1247,9 +1247,9 @@ EXTEND_QUOTE:
 
       // Create the compiler invocation
       std::unique_ptr<clang::CompilerInvocation> CI(new clang::CompilerInvocation);
+      // LLVM-18 fix: CreateFromArgs now requires ArrayRef
       return clang::CompilerInvocation::CreateFromArgs(*CI,
-                                                       &args[0],
-                                                       &args[0] + args.size(),
+                                                       llvm::ArrayRef<const char*>(&args[0], args.size()),
                                                        Diags);
     }
 #endif
