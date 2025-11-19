@@ -219,13 +219,13 @@ namespace gbe
     return offset;
   }
 
-  class GenRemoveGEPPasss : public BasicBlockPass
+  class GenRemoveGEPPasss : public FunctionPass
   {
 
    public:
     static char ID;
     GenRemoveGEPPasss(const ir::Unit &unit) :
-      BasicBlockPass(ID),
+      FunctionPass(ID),
       unit(unit) {}
     const ir::Unit &unit;
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -242,26 +242,30 @@ namespace gbe
 
     bool simplifyGEPInstructions(GetElementPtrInst* GEPInst);
 
-    virtual bool runOnBasicBlock(BasicBlock &BB)
+    virtual bool runOnFunction(Function &F)
     {
-      bool changedBlock = false;
-    // Iterate safely, as simplifyGEPInstructions may erase the current instruction
-    for (Instruction &I : BB) {
-      if (GetElementPtrInst* gep = dyn_cast<GetElementPtrInst>(&I)) {
-        // Check if gep is still in a basic block, as it might have been erased by a previous iteration
-        if (gep->getParent()) {
-          if (simplifyGEPInstructions(gep)) {
-            changedBlock = true;
+      bool changed = false;
+      // Iterate over all basic blocks in the function
+      for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
+        BasicBlock &BB = *BI;
+        // Iterate safely, as simplifyGEPInstructions may erase the current instruction
+        for (Instruction &I : BB) {
+          if (GetElementPtrInst* gep = dyn_cast<GetElementPtrInst>(&I)) {
+            // Check if gep is still in a basic block, as it might have been erased by a previous iteration
+            if (gep->getParent()) {
+              if (simplifyGEPInstructions(gep)) {
+                changed = true;
             // After simplification, the GEP is erased, so we don't need to worry about iterator invalidation
             // for this specific instruction. However, the loop structure itself needs to be safe.
             // Re-evaluating BB.getInstList().end() or using a different loop might be needed if further modifications
             // within the loop could alter BB structure significantly beyond erasing 'gep'.
             // For now, assuming simplifyGEPInstructions only erases 'gep' and inserts before it.
+              }
+            }
           }
         }
       }
-      }
-      return changedBlock;
+      return changed;
     }
   };
 
@@ -334,7 +338,7 @@ namespace gbe
     return true;
   }
 
-  BasicBlockPass *createRemoveGEPPass(const ir::Unit &unit) {
+  FunctionPass *createRemoveGEPPass(const ir::Unit &unit) {
     return new GenRemoveGEPPasss(unit);
   }
 } /* namespace gbe */

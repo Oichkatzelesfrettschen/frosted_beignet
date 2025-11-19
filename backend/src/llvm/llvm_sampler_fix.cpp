@@ -43,8 +43,8 @@ namespace gbe {
     bool visitCallInst(CallInst *I) {
       if(!I)
         return false;
-      Value *Callee = I->getCalledValue();
-      const std::string fnName = Callee->getName();
+      Value *Callee = GBE_GET_CALLED_VALUE(I);
+      std::string fnName = std::string(Callee->getName());
       bool changed = false;
       Type *boolTy = IntegerType::get(I->getContext(), 1);
       Type *i32Ty = IntegerType::get(I->getContext(), 32);
@@ -57,7 +57,7 @@ namespace gbe {
         Value *needFixVal;
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
         CallInst *init = dyn_cast<CallInst>(I->getOperand(0));
-        if (init && init->getCalledValue()->getName().compare("__translate_sampler_initializer"))
+        if (init && GBE_GET_CALLED_VALUE(init)->getName().compare("__translate_sampler_initializer"))
         {
           const ConstantInt *ci = dyn_cast<ConstantInt>(init->getOperand(0));
           uint32_t samplerInt = ci->getZExtValue();
@@ -82,9 +82,9 @@ namespace gbe {
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
           Module *M = I->getParent()->getParent()->getParent();
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
-          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType());
+          FunctionCallee samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType());
 #else
-          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
+          Constant* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
 #endif
           Value *samplerVal = Builder.CreateCall(samplerCvt, {I->getOperand(0)});
 #else
@@ -107,7 +107,7 @@ namespace gbe {
         Value *needFixVal;
  #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
         CallInst *init = dyn_cast<CallInst>(I->getOperand(0));
-        if (init && init->getCalledValue()->getName().compare("__translate_sampler_initializer"))
+        if (init && GBE_GET_CALLED_VALUE(init)->getName().compare("__translate_sampler_initializer"))
         {
           const ConstantInt *ci = dyn_cast<ConstantInt>(init->getOperand(0));
           uint32_t samplerInt = ci->getZExtValue();
@@ -124,9 +124,9 @@ namespace gbe {
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
           Module *M = I->getParent()->getParent()->getParent();
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
-          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType());
+          FunctionCallee samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType());
 #else
-          Value* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
+          Constant* samplerCvt = M->getOrInsertFunction("__gen_ocl_sampler_to_int", i32Ty, I->getOperand(0)->getType(), nullptr);
 #endif
           Value *samplerVal = Builder.CreateCall(samplerCvt, {I->getOperand(0)});
 #else

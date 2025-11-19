@@ -26,13 +26,13 @@
 
 using namespace llvm;
 namespace gbe {
-  class GenLoadStoreOptimization : public BasicBlockPass {
+  class GenLoadStoreOptimization : public FunctionPass {
 
   public:
     static char ID;
     ScalarEvolution *SE;
     const DataLayout *TD;
-    GenLoadStoreOptimization() : BasicBlockPass(ID) {}
+    GenLoadStoreOptimization() : FunctionPass(ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
@@ -45,21 +45,27 @@ namespace gbe {
       AU.setPreservesCFG();
     }
 
-    virtual bool runOnBasicBlock(BasicBlock &BB) {
+    virtual bool runOnFunction(Function &F) {
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
       SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
 #else
       SE = &getAnalysis<ScalarEvolution>();
 #endif
       #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 37
-        TD = &BB.getModule()->getDataLayout();
+        TD = &F.getParent()->getDataLayout();
       #elif LLVM_VERSION_MINOR >= 5
         DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
         TD = DLP ? &DLP->getDataLayout() : nullptr;
       #else
         TD = getAnalysisIfAvailable<DataLayout>();
       #endif
-      return optimizeLoadStore(BB);
+
+      bool changed = false;
+      // Iterate over all basic blocks in the function
+      for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
+        changed |= optimizeLoadStore(*BI);
+      }
+      return changed;
     }
     Type *getValueType(Value *insn);
     Value *getPointerOperand(Value *I);
@@ -466,7 +472,7 @@ namespace gbe {
     return changed;
   }
 
-  BasicBlockPass *createLoadStoreOptimizationPass() {
+  FunctionPass *createLoadStoreOptimizationPass() {
     return new GenLoadStoreOptimization();
   }
 };

@@ -117,9 +117,22 @@
   // No CallSite.h needed
   // Include compatibility layer that provides CallSite wrapper around CallBase
   #include "llvm/llvm_callsite_compat.hpp"
+
+  // LLVM-11+ also renamed getCalledValue() to getCalledOperand()
+  // Provide inline compatibility helper
+  namespace llvm {
+    inline Value *getCalledValueCompat(CallInst *CI) {
+      return CI->getCalledOperand();
+    }
+    inline Value *getCalledValueCompat(const CallInst *CI) {
+      return CI->getCalledOperand();
+    }
+  }
+  #define GBE_GET_CALLED_VALUE(CI) (CI)->getCalledOperand()
 #else
   // For LLVM 10 and earlier
   #include "llvm/IR/CallSite.h"
+  #define GBE_GET_CALLED_VALUE(CI) (CI)->getCalledValue()
 #endif
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/InstVisitor.h"
