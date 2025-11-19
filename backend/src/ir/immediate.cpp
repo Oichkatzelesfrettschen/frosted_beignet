@@ -16,6 +16,7 @@
  *
  */
 #include "immediate.hpp"
+#include <cmath>  // C++17/20 fix: fmodf, fmod not in global namespace
 
 using namespace gbe;
 using namespace ir;
