@@ -263,16 +263,27 @@ static Value *splitLoad(LoadInst *Inst, ConversionState &State) {
       OrigPtr,
       LoType->getPointerTo(AddrSpace),
       OrigPtr->getName() + ".loty");
-  Value *LoadLo = IRB.CreateAlignedLoad(
-      BCLo, Inst->getAlignment(), Inst->getName() + ".lo");
+#if LLVM_VERSION_MAJOR >= 15
+  Value *LoadLo = IRB.CreateAlignedLoad(LoType, BCLo, GBE_GET_ALIGNMENT(*Inst), Inst->getName() + ".lo");
+#else
+  Value *LoadLo = IRB.CreateAlignedLoad(BCLo, GBE_GET_ALIGNMENT(*Inst), Inst->getName() + ".lo");
+#endif
   Value *LoExt = IRB.CreateZExt(LoadLo, NewType, LoadLo->getName() + ".ext");
+#if LLVM_VERSION_MAJOR >= 15
+  Value *GEPHi = IRB.CreateConstGEP1_32(LoType, BCLo, 1, OrigPtr->getName() + ".hi");
+#else
   Value *GEPHi = IRB.CreateConstGEP1_32(BCLo, 1, OrigPtr->getName() + ".hi");
+#endif
   Value *BCHi = IRB.CreateBitCast(
         GEPHi,
         HiType->getPointerTo(AddrSpace),
         OrigPtr->getName() + ".hity");
 
+#if LLVM_VERSION_MAJOR >= 15
+  Value *LoadHi = IRB.CreateLoad(HiType, BCHi, Inst->getName() + ".hi");
+#else
   Value *LoadHi = IRB.CreateLoad(BCHi, Inst->getName() + ".hi");
+#endif
   if (!isLegalSize(Width - LoWidth)) {
     LoadHi = splitLoad(cast<LoadInst>(LoadHi), State);
   }
@@ -314,11 +325,15 @@ static Value *splitStore(StoreInst *Inst, ConversionState &State) {
       OrigPtr->getName() + ".loty");
   Value *LoTrunc = IRB.CreateTrunc(
       OrigVal, LoType, OrigVal->getName() + ".lo");
-  IRB.CreateAlignedStore(LoTrunc, BCLo, Inst->getAlignment());
+  IRB.CreateAlignedStore(LoTrunc, BCLo, GBE_GET_ALIGNMENT(*Inst));
 
   Value *HiLShr = IRB.CreateLShr(
       OrigVal, LoWidth, OrigVal->getName() + ".hi.sh");
+#if LLVM_VERSION_MAJOR >= 15
+  Value *GEPHi = IRB.CreateConstGEP1_32(LoType, BCLo, 1, OrigPtr->getName() + ".hi");
+#else
   Value *GEPHi = IRB.CreateConstGEP1_32(BCLo, 1, OrigPtr->getName() + ".hi");
+#endif
   Value *HiTrunc = IRB.CreateTrunc(
       HiLShr, HiType, OrigVal->getName() + ".hi");
   Value *BCHi = IRB.CreateBitCast(
@@ -549,16 +564,20 @@ static void convertInstruction(Instruction *Inst, ConversionState &State) {
       Op1 = getClearConverted(Cmp->getOperand(1), Cmp->getOperand(1)->getType(), IRB, State);
     }
     IRB.SetInsertPoint(Cmp);
-    Instruction *NewInst = IRB.CreateICmp(Cmp->getPredicate(), Op0, Op1, Cmp->getName());
-    CopyDebug(NewInst, Cmp);
+    Value *NewInst = IRB.CreateICmp(Cmp->getPredicate(), Op0, Op1, Cmp->getName());
+    if (Instruction *NewInstInstr = dyn_cast<Instruction>(NewInst)) {
+      CopyDebug(NewInstInstr, Cmp);
+    }
     State.recordConverted(Cmp, NewInst);
   } else if (SelectInst *Select = dyn_cast<SelectInst>(Inst)) {
     IRB.SetInsertPoint(Select);
-    Instruction *NewInst = IRB.CreateSelect(Select->getCondition(),
+    Value *NewInst = IRB.CreateSelect(Select->getCondition(),
                                           State.getConverted(Select->getTrueValue()),
                                           State.getConverted(Select->getFalseValue()),
                                           Select->getName());
-    CopyDebug(NewInst, Select);
+    if (Instruction *NewInstInstr = dyn_cast<Instruction>(NewInst)) {
+      CopyDebug(NewInstInstr, Select);
+    }
     State.recordConverted(Select, NewInst);
   } else if (PHINode *Phi = dyn_cast<PHINode>(Inst)) {
     // PHINodes are typically not created with IRBuilder in modification passes like this.

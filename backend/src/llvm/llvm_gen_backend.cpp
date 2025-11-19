@@ -1295,7 +1295,8 @@ namespace gbe
   void GenWriter::assignBti(Function &F) {
     // LLVM 17+: getGlobalList() is private, use global_begin/global_end iterators
     for(auto i = TheModule->global_begin(); i != TheModule->global_end(); i ++) {
-      GlobalVariable &v = *i;
+      // TheModule is const, so iterators return const GlobalVariable&
+      GlobalVariable &v = const_cast<GlobalVariable&>(*i);
       if(!v.isConstantUsed()) continue;
 
       BtiMap.insert(std::make_pair(&v, getNewBti(&v, false)));
@@ -1464,7 +1465,8 @@ namespace gbe
     std::vector<Value *> revisit;
     // GlobalVariable - LLVM 17+: use global_begin/global_end iterators
     for(auto i = TheModule->global_begin(); i != TheModule->global_end(); i ++) {
-      GlobalVariable &v = *i;
+      // TheModule is const, so iterators return const GlobalVariable&
+      GlobalVariable &v = const_cast<GlobalVariable&>(*i);
       if(!v.isConstantUsed()) continue;
       findPointerEscape(&v, mixedPtr, true, revisit);
     }
@@ -1522,9 +1524,16 @@ namespace gbe
       IRBuilder<> Builder(&entry);
       Builder.SetInsertPoint(&*bbIter);
 
+#if LLVM_VERSION_MAJOR >= 15
+      // LLVM 15+: Opaque pointers - use getAllocatedType() from AllocaInst
+      Type * allocatedType = cast<AllocaInst>(base)->getAllocatedType();
+      Value * btiArray = Builder.CreateAlloca(allocatedType, ArraySize, base->getName() + ".bti");
+      Value * pointerBaseArray = Builder.CreateAlloca(allocatedType, ArraySize, base->getName() + ".pointer-base");
+#else
       PointerType * AITy = cast<AllocaInst>(base)->getType();
       Value * btiArray = Builder.CreateAlloca(AITy->getElementType(), ArraySize, base->getName() + ".bti");
       Value * pointerBaseArray = Builder.CreateAlloca(AITy->getElementType(), ArraySize, base->getName() + ".pointer-base");
+#endif
 
       processPointerArray(base, btiArray, pointerBaseArray);
     }
@@ -2504,7 +2513,18 @@ namespace gbe
           PointerType *pointerType = dyn_cast<PointerType>(type);
           if(!pointerType)
             continue;
+
+#if LLVM_VERSION_MAJOR >= 15
+          // LLVM 15+: Opaque pointers - get pointee type from attributes
+          Type *pointed = nullptr;
+          if (I->hasByValAttr()) {
+            // For byval arguments, get type from attribute
+            pointed = I->getParamByValType();
+          }
+#else
           Type *pointed = pointerType->getElementType();
+#endif
+
           // By value structure
           if (I->hasByValAttr()) {
             const size_t structSize = getTypeByteSize(unit, pointed);
@@ -2515,7 +2535,12 @@ namespace gbe
             const uint32_t addr = pointerType->getAddressSpace();
             const ir::AddressSpace addrSpace = addressSpaceLLVMToGen(addr);
             const uint32_t ptrSize = getTypeByteSize(unit, type);
+#if LLVM_VERSION_MAJOR >= 15
+            // LLVM 15+: For opaque pointers without byval, use pointer size for alignment
+            const uint32_t align = getAlignmentByte(unit, type);
+#else
             const uint32_t align = getAlignmentByte(unit, pointed);
+#endif
               switch (addrSpace) {
               case ir::MEM_GLOBAL:
                 ctx.input(argName, ir::FunctionArgument::GLOBAL_POINTER, reg, llvmInfo, ptrSize, align, BtiMap.find(&*I)->second);
@@ -3355,7 +3380,7 @@ namespace gbe
           index = 1;
         }
         if (c != NULL && isPowerOf<2>(c->getSExtValue())) {
-          c = ConstantInt::get(c->getType(), logi2(c->getZExtValue()));
+          c = cast<ConstantInt>(ConstantInt::get(c->getType(), logi2(c->getZExtValue())));
           if(index == 0)
             ctx.SHL(type, dst, src1, this->getRegister(c));
           else
@@ -3374,7 +3399,7 @@ namespace gbe
         //Only check divisor for DIV
         ConstantInt *c = dyn_cast<ConstantInt>(I.getOperand(1));
         if (c != NULL && isPowerOf<2>(c->getZExtValue())) {
-          c = ConstantInt::get(c->getType(), logi2(c->getZExtValue()));
+          c = cast<ConstantInt>(ConstantInt::get(c->getType(), logi2(c->getZExtValue())));
           ctx.SHR(getUnsignedType(ctx, I.getType()), dst, src0, this->getRegister(c));
         } else {
           ctx.DIV(getUnsignedType(ctx, I.getType()), dst, src0, src1);

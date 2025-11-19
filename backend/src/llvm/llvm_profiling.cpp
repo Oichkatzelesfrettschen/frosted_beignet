@@ -117,7 +117,12 @@ namespace gbe
 
     module = F.getParent();
     intTy = IntegerType::get(module->getContext(), 32);
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - use PointerType::get with address space
+    ptrTy = PointerType::get(module->getContext(), 1);
+#else
     ptrTy = Type::getInt32PtrTy(module->getContext(), 1);
+#endif
     builder = new IRBuilder<>(module->getContext());
 
     /* alloc a new buffer ptr to collect the timestamps. */

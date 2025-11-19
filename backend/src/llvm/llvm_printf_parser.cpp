@@ -463,7 +463,89 @@ error:
 
     /* Check whether the arg match the format specifer. If needed, some
        conversion need to be applied. */
-    switch (arg->getType()->getTypeID()) {
+
+    // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately before switch
+    Type* arg_type = arg->getType();
+    if (arg_type->isVectorTy()) {
+      Type* vect_type = arg_type;
+      Type* elt_type = cast<VectorType>(vect_type)->getElementType();
+      int vec_num = GBE_VECTOR_GET_NUM_ELEMENTS(cast<VectorType>(vect_type));
+      bool sign = false;
+
+      if (vec_num != slot.state.vector_n) {
+        printf("Error The printf vector number is not match!\n");
+        return false;
+      }
+
+      switch (slot.state.conversion_specifier) {
+        case PRINTF_CONVERSION_I:
+        case PRINTF_CONVERSION_D:
+          sign = true;
+        case PRINTF_CONVERSION_O:
+        case PRINTF_CONVERSION_U:
+        case PRINTF_CONVERSION_x:
+        case PRINTF_CONVERSION_X: {
+          if (elt_type->getTypeID() != Type::IntegerTyID) {
+            printf("Do not support type conversion between float and int in vector printf!\n");
+            return false;
+          }
+
+          Type* elt_dst_type = NULL;
+          if (slot.state.length_modifier == PRINTF_LM_L) {
+            elt_dst_type = Type::getInt64Ty(elt_type->getContext());
+          } else {
+            elt_dst_type = Type::getInt32Ty(elt_type->getContext());
+          }
+
+          /* If the bits change, we need to consider the signed. */
+          if (elt_type != elt_dst_type) {
+            Value *II = NULL;
+            for (int i = 0; i < vec_num; i++) {
+              Value *vec = II ? II : UndefValue::get(FixedVectorType::get(elt_dst_type, vec_num));
+              Value *cv = ConstantInt::get(Type::getInt32Ty(elt_type->getContext()), i);
+              Value *org = builder->CreateExtractElement(arg, cv);
+              Value *cvt = builder->CreateIntCast(org, elt_dst_type, sign);
+              II = builder->CreateInsertElement(vec, cvt, cv);
+            }
+            new_arg = II;
+          }
+
+          return true;
+        }
+
+        case PRINTF_CONVERSION_F:
+        case PRINTF_CONVERSION_f:
+        case PRINTF_CONVERSION_E:
+        case PRINTF_CONVERSION_e:
+        case PRINTF_CONVERSION_G:
+        case PRINTF_CONVERSION_g:
+        case PRINTF_CONVERSION_A:
+        case PRINTF_CONVERSION_a:
+          if (elt_type->getTypeID() != Type::DoubleTyID && elt_type->getTypeID() != Type::FloatTyID) {
+            printf("Do not support type conversion between float and int in vector printf!\n");
+            return false;
+          }
+
+          if (elt_type->getTypeID() != Type::FloatTyID) {
+            Value *II = NULL;
+            for (int i = 0; i < vec_num; i++) {
+              Value *vec = II ? II : UndefValue::get(FixedVectorType::get(Type::getFloatTy(elt_type->getContext()), vec_num));
+              Value *cv = ConstantInt::get(Type::getInt32Ty(elt_type->getContext()), i);
+              Value *org = builder->CreateExtractElement(arg, cv);
+              Value* cvt  = builder->CreateFPCast(org, Type::getFloatTy(module->getContext()));
+              II = builder->CreateInsertElement(vec, cvt, cv);
+            }
+            new_arg = II;
+          }
+
+          return true;
+
+        default:
+          return false;
+      }
+    }
+
+    switch (arg_type->getTypeID()) {
       case Type::IntegerTyID: {
         bool sign = false;
         switch (slot.state.conversion_specifier) {
@@ -594,88 +676,6 @@ error:
         }
 
         break;
-
-      case Type::VectorTyID: {
-        Type* vect_type = arg->getType();
-        if (vect_type->isVectorTy()) {
-          Type* elt_type = cast<VectorType>(vect_type)->getElementType();
-          int vec_num = GBE_VECTOR_GET_NUM_ELEMENTS(cast<VectorType>(vect_type));
-          bool sign = false;
-
-          if (vec_num != slot.state.vector_n) {
-            printf("Error The printf vector number is not match!\n");
-            return false;
-          }
-
-          switch (slot.state.conversion_specifier) {
-            case PRINTF_CONVERSION_I:
-            case PRINTF_CONVERSION_D:
-              sign = true;
-            case PRINTF_CONVERSION_O:
-            case PRINTF_CONVERSION_U:
-            case PRINTF_CONVERSION_x:
-            case PRINTF_CONVERSION_X: {
-              if (elt_type->getTypeID() != Type::IntegerTyID) {
-                printf("Do not support type conversion between float and int in vector printf!\n");
-                return false;
-              }
-
-              Type* elt_dst_type = NULL;
-              if (slot.state.length_modifier == PRINTF_LM_L) {
-                elt_dst_type = Type::getInt64Ty(elt_type->getContext());
-              } else {
-                elt_dst_type = Type::getInt32Ty(elt_type->getContext());
-              }
-
-              /* If the bits change, we need to consider the signed. */
-              if (elt_type != elt_dst_type) {
-                Value *II = NULL;
-                for (int i = 0; i < vec_num; i++) {
-                  Value *vec = II ? II : UndefValue::get(FixedVectorType::get(elt_dst_type, vec_num));
-                  Value *cv = ConstantInt::get(Type::getInt32Ty(elt_type->getContext()), i);
-                  Value *org = builder->CreateExtractElement(arg, cv);
-                  Value *cvt = builder->CreateIntCast(org, elt_dst_type, sign);
-                  II = builder->CreateInsertElement(vec, cvt, cv);
-                }
-                new_arg = II;
-              }
-
-              return true;
-            }
-
-            case PRINTF_CONVERSION_F:
-            case PRINTF_CONVERSION_f:
-            case PRINTF_CONVERSION_E:
-            case PRINTF_CONVERSION_e:
-            case PRINTF_CONVERSION_G:
-            case PRINTF_CONVERSION_g:
-            case PRINTF_CONVERSION_A:
-            case PRINTF_CONVERSION_a:
-              if (elt_type->getTypeID() != Type::DoubleTyID && elt_type->getTypeID() != Type::FloatTyID) {
-                printf("Do not support type conversion between float and int in vector printf!\n");
-                return false;
-              }
-
-              if (elt_type->getTypeID() != Type::FloatTyID) {
-                Value *II = NULL;
-                for (int i = 0; i < vec_num; i++) {
-                  Value *vec = II ? II : UndefValue::get(FixedVectorType::get(Type::getFloatTy(elt_type->getContext()), vec_num));
-                  Value *cv = ConstantInt::get(Type::getInt32Ty(elt_type->getContext()), i);
-                  Value *org = builder->CreateExtractElement(arg, cv);
-                  Value* cvt  = builder->CreateFPCast(org, Type::getFloatTy(module->getContext()));
-                  II = builder->CreateInsertElement(vec, cvt, cv);
-                }
-                new_arg = II;
-              }
-
-              return true;
-
-            default:
-              return false;
-          }
-        }
-        return false;
-      }
 
       default:
         return false;
