@@ -33,7 +33,10 @@ namespace gbe {
   class SamplerFix : public FunctionPass {
   public:
     SamplerFix() : FunctionPass(ID) {
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
+#if LLVM_VERSION_MAJOR >= 18
+      // LLVM 18+: DominatorTree initialization handled automatically by PassManager
+      // Legacy PM still works for backend, initialization not required
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
       initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
 #else
       initializeDominatorTreePass(*PassRegistry::getPassRegistry());
