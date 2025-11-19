@@ -6,8 +6,8 @@
 #include "backend/gen_insn_selection.hpp" // For SelectionInstruction
 #include "backend/gen_reg_allocation.hpp" // For GenRegAllocator (ctx.ra)
 #include "backend/gen_register.hpp" // For GenRegister
+#include "backend/program.hpp"   // For gbe::Kernel complete definition
 #include "ir/function.hpp"      // For ir::Function (ctx.fn)
-#include "ir/kernel.hpp"        // For ir::Kernel (ctx.kernel)
 #include "ir/value.hpp"         // For ir::ocl constants if any are used directly
 
 namespace gbe {
@@ -118,7 +118,7 @@ void ContextEmitHelpers::calculateFullU64MUL_chv_bxt(GenContext& ctx, GenRegiste
 void ContextEmitHelpers::emitStackPointer_chv_bxt(GenContext& ctx) {
     GenRegAllocator *ra = ctx.ra; // Get reg allocator from context
     GenEncoder *p = ctx.p;       // Get encoder from context
-    const ir::Kernel* kernel = ctx.kernel; // Get kernel from context
+    gbe::Kernel* kernel = ctx.getKernel(); // Get kernel using accessor
     const ir::Function& fn = ctx.getFunction(); // Get function from context
 
     using namespace ir;
@@ -131,7 +131,7 @@ void ContextEmitHelpers::emitStackPointer_chv_bxt(GenContext& ctx) {
     const uint32_t perLaneSize = kernel->getStackSize();
     GBE_ASSERT(perLaneSize > 0);
 
-    const GenRegister selStackPtr = ctx.simdWidth == 8 ? // Use ctx.simdWidth
+    const GenRegister selStackPtr = ctx.getSimdWidth() == 8 ? // Use ctx.getSimdWidth()
       GenRegister::ud8grf(ir::ocl::stackptr) :
       GenRegister::ud16grf(ir::ocl::stackptr);
     const GenRegister stackptr_reg = ra->genReg(selStackPtr); // Renamed to avoid conflict with variable name 'stackptr' in original code if it was a type
@@ -146,15 +146,15 @@ void ContextEmitHelpers::emitStackPointer_chv_bxt(GenContext& ctx) {
       p->curr.execWidth = 1;
       p->curr.predicate = GEN_PREDICATE_NONE;
       p->AND(tmpReg, GenRegister::ud1grf(0,5), GenRegister::immuw(0x1ff)); //threadId
-      p->MUL(tmpReg, tmpReg, GenRegister::immuw(ctx.simdWidth));  //threadId * simdWidth
-      p->curr.execWidth = ctx.simdWidth;
+      p->MUL(tmpReg, tmpReg, GenRegister::immuw(ctx.getSimdWidth()));  //threadId * simdWidth
+      p->curr.execWidth = ctx.getSimdWidth();
       p->ADD(stackptr_reg, GenRegister::unpacked_uw(stackptr_reg), tmpReg);  //threadId * simdWidth + laneId, must < 64K
       p->curr.execWidth = 1;
       p->MOV(tmpReg_ud, GenRegister::immud(perLaneSize));
-      p->curr.execWidth = ctx.simdWidth;
+      p->curr.execWidth = ctx.getSimdWidth();
       p->MUL(stackptr_reg, tmpReg_ud, GenRegister::unpacked_uw(stackptr_reg)); // (threadId * simdWidth + laneId)*perLaneSize
       if (fn.getPointerFamily() == ir::FAMILY_QWORD) {
-        const GenRegister selStackPtr2 = ctx.simdWidth == 8 ? // Use ctx.simdWidth
+        const GenRegister selStackPtr2 = ctx.getSimdWidth() == 8 ? // Use ctx.getSimdWidth()
           GenRegister::ul8grf(ir::ocl::stackptr) :
           GenRegister::ul16grf(ir::ocl::stackptr);
         GenRegister stackptr2_reg = ra->genReg(selStackPtr2); // Renamed

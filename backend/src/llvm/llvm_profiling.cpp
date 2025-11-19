@@ -34,12 +34,14 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/IRBuilder.h"
 
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/CFG.h"
+// CallSite compatibility is handled via llvm_callsite_compat.hpp
+#if LLVM_VERSION_MAJOR >= 11
+  #include "llvm/llvm_callsite_compat.hpp"
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
+  #include "llvm/IR/CallSite.h"
 #else
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/CFG.h"
+  #include "llvm/Support/CallSite.h"
 #endif
 
 #include "llvm/Support/raw_ostream.h"

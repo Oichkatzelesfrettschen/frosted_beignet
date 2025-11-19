@@ -72,7 +72,11 @@
 #include "llvm/Support/FormattedStream.h"
 // LLVM-18 fix: TargetRegistry moved to MC subdirectory
 #include "llvm/MC/TargetRegistry.h"
+#if LLVM_VERSION_MAJOR >= 18
+#include "llvm/TargetParser/Host.h"
+#else
 #include "llvm/Support/Host.h"
+#endif
 #include "llvm/Support/ToolOutputFile.h"
 
 #include "llvm-c/Linker.h"
@@ -104,7 +108,19 @@
 
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #include "llvm/IR/Mangler.h"
-#include "llvm/IR/CallSite.h"
+// LLVM-11+ fix: CallSite.h was removed, use CallBase and AbstractCallSite instead
+// CallSite was a wrapper around CallInst and InvokeInst
+// Now we use CallBase directly (base class of CallInst, InvokeInst, CallBrInst)
+#if LLVM_VERSION_MAJOR >= 11
+  // For LLVM 11+, CallBase is in Instructions.h (already included above)
+  // #include "llvm/IR/Instructions.h"  // Already included
+  // No CallSite.h needed
+  // Include compatibility layer that provides CallSite wrapper around CallBase
+  #include "llvm/llvm_callsite_compat.hpp"
+#else
+  // For LLVM 10 and earlier
+  #include "llvm/IR/CallSite.h"
+#endif
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IRPrintingPasses.h"
@@ -129,7 +145,12 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/PassManager.h"
 #endif
+// LLVM-16+ fix: Triple.h moved from ADT to TargetParser
+#if LLVM_VERSION_MAJOR >= 16
+#include "llvm/TargetParser/Triple.h"
+#else
 #include "llvm/ADT/Triple.h"
+#endif
 
 #include <clang/CodeGen/CodeGenAction.h>
 
