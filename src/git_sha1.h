@@ -1,2 +1,1 @@
-/* Dummy git_sha1.h */
-#define BEIGNET_GIT_SHA1 "unknown_fallback"
+#define BEIGNET_GIT_SHA1 "git-9554493"

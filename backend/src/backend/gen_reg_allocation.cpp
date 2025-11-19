@@ -34,6 +34,15 @@
 #include <iostream>
 #include <iomanip>
 
+// Phase 5A: High-performance data structures
+#include "backend/gen_reg_allocation_map.hpp"      // O(1) register mapping
+#include "backend/gen_reg_allocation_intervals.hpp" // Index-based intervals
+
+// Phase 5A: Enable optimizations (can be disabled via CMake)
+#ifndef USE_PHASE5A_OPTIMIZATIONS
+#define USE_PHASE5A_OPTIMIZATIONS 1
+#endif
+
 
 #define HALF_REGISTER_FILE_OFFSET (32*64)
 namespace gbe
@@ -44,20 +53,8 @@ namespace gbe
 
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
-  /*! Interval as used in linear scan allocator. Basically, stores the first and
-   *  the last instruction where the register is alive
-   */
-  struct GenRegInterval {
-    INLINE GenRegInterval(ir::Register reg) :
-      reg(reg), minID(INT_MAX), maxID(-INT_MAX), accessCount(0),
-      blockID(-1), conflictReg(0), b3OpAlign(0), usedHole(false), isHole(false){}
-    ir::Register reg;     //!< (virtual) register of the interval
-    int32_t minID, maxID; //!< Starting and ending points
-    int32_t accessCount;
-    int32_t blockID; //!< blockID for in-block regs that can reuse hole
-    ir::Register conflictReg; // < has banck conflict with this register
-    bool b3OpAlign, usedHole, isHole;
-  };
+  // Phase 5A: GenRegInterval now defined in backend/gen_reg_interval.hpp
+  // (included via gen_reg_allocation_intervals.hpp)
 
   struct SpillInterval {
     SpillInterval(const ir::Register r, float c):
@@ -80,7 +77,21 @@ namespace gbe
     /*! Return the Gen register from the selection register */
     GenRegister genReg(const GenRegister &reg);
     INLINE bool isAllocated(const ir::Register &reg) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) check
+      bool result = registerMap_.contains(reg);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        bool oldResult = RA.contains(reg);
+        GBE_ASSERT(result == oldResult);
+      }
+
+      return result;
+#else
+      // OLD: std::map - O(log n) check
       return RA.contains(reg);
+#endif
     }
     /*! Output the register allocation */
     void outputAllocation(void);
@@ -143,6 +154,13 @@ namespace gbe
     map<uint32_t, ir::Register> offsetReg;
     /*! Provides the position of each register in a vector */
     map<ir::Register, VectorLocation> vectorMap;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    /*! Phase 5A: High-performance register mapping (replaces RA) */
+    RegisterMap registerMap_;
+    /*! Phase 5A: Enable parallel validation during integration */
+    bool phase5aValidationMode_ = true;
+#endif
     /*! All vectors used in the selection */
     vector<SelectionVector*> vectors;
     /*! The set of booleans that will go to GRF (cannot be kept into flags) */
@@ -208,8 +226,25 @@ namespace gbe
   };
 
 
-  GenRegAllocator::Opaque::Opaque(GenContext &ctx) : ctx(ctx) {}
-  GenRegAllocator::Opaque::~Opaque(void) {}
+  GenRegAllocator::Opaque::Opaque(GenContext &ctx) : ctx(ctx) {
+#if USE_PHASE5A_OPTIMIZATIONS
+    // Phase 5A: Initialize high-performance data structures
+    registerMap_.reserve(1024);  // Hint: typical kernel has ~1000 registers
+    registerMap_.enableReverseMap();  // For offsetReg compatibility
+    std::cout << "[Phase 5A] Optimizations enabled (validation mode: "
+              << (phase5aValidationMode_ ? "ON" : "OFF") << ")\n";
+#endif
+  }
+
+  GenRegAllocator::Opaque::~Opaque(void) {
+#if USE_PHASE5A_OPTIMIZATIONS
+    if (phase5aValidationMode_) {
+      std::cout << "[Phase 5A] Final stats - RegisterMap size: "
+                << registerMap_.size() << " entries, memory: "
+                << registerMap_.memoryUsage() / 1024 << " KB\n";
+    }
+#endif
+  }
 
   void GenRegAllocator::Opaque::allocatePayloadReg(ir::Register reg,
                                                    uint32_t offset,
@@ -218,7 +253,20 @@ namespace gbe
     using namespace ir;
     assert(offset >= GEN_REG_SIZE);
     offset += subOffset;
+
+    // OLD: Keep for parallel validation
     RA.insert(std::make_pair(reg, offset));
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A RegisterMap - O(1) insertion
+    registerMap_.insert(reg, offset);
+
+    // VALIDATION: Ensure both methods agree
+    if (phase5aValidationMode_) {
+      GBE_ASSERT(registerMap_.get(reg) == offset);
+      GBE_ASSERT(registerMap_.contains(reg) == RA.contains(reg));
+    }
+#endif
     //GBE_ASSERT(reg != ocl::blockip || (offset % GEN_REG_SIZE == 0));
     //this->intervals[reg].minID = 0;
     //this->intervals[reg].maxID = 0;
@@ -332,6 +380,28 @@ namespace gbe
           auto holereg = holeregbest->reg;
           holeregbest->startID = useID + 1;
           int32_t grfOffset = -1;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+          // NEW: Phase 5A RegisterMap - O(1) lookup and insertion
+          if (registerMap_.contains(holereg)) {
+            grfOffset = registerMap_.get(holereg);
+            registerMap_.insert(reg, grfOffset);
+
+            // VALIDATION: Ensure matches old method
+            if (phase5aValidationMode_) {
+              GBE_ASSERT(RA.contains(holereg));
+              GBE_ASSERT(grfOffset == RA.find(holereg)->second);
+              GBE_ASSERT(registerMap_.get(reg) == grfOffset);
+            }
+
+            // OLD: Keep for parallel validation
+            RA.insert(std::make_pair(reg, grfOffset));
+
+            interval.usedHole= true;
+            intervals[holereg].usedHole = true;
+          }
+#else
+          // OLD: std::map - O(log n) lookup and insertion
           if (RA.contains(holereg)) {
             //uint32_t grfOffset = RA.find(holereg)->second;
             grfOffset = RA.find(holereg)->second;
@@ -339,10 +409,18 @@ namespace gbe
             interval.usedHole= true;
             intervals[holereg].usedHole = true;
           }
+#endif
         }
       }
     }
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A RegisterMap - O(1) check
+    if (registerMap_.contains(reg) == true)
+#else
+    // OLD: std::map - O(log n) check
     if (RA.contains(reg) == true)
+#endif
       return true; // already allocated
     uint32_t grfOffset = allocateReg(interval, regSize, regSize);
     if (grfOffset == 0) {
@@ -798,7 +876,14 @@ namespace gbe
 
       if (interval.maxID == -INT_MAX)
         continue; // Unused register
+
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) check
+      if (registerMap_.contains(reg))
+#else
+      // OLD: std::map - O(log n) check
       if (RA.contains(reg))
+#endif
         continue; // already allocated
       if (flagBooleans.contains(reg))
         continue;
@@ -913,20 +998,38 @@ namespace gbe
   {
     if (this->intervals[reg].usedHole && !this->intervals[reg].isHole)
       return true;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A RegisterMap - O(1) lookup
+    if (flagBooleans.contains(reg))
+      return false;
+    GBE_ASSERT(registerMap_.contains(reg));
+    const uint32_t offset = registerMap_.get(reg);
+
+    // VALIDATION: Ensure matches old method
+    if (phase5aValidationMode_) {
+      auto it = RA.find(reg);
+      GBE_ASSERT(it != RA.end());
+      GBE_ASSERT(it->second == offset);
+    }
+#else
+    // OLD: std::map - O(log n) lookup
     auto it = RA.find(reg);
     if (flagBooleans.contains(reg))
       return false;
     GBE_ASSERT(it != RA.end());
+    const uint32_t offset = it->second;
+#endif
     // offset less than 32 means it is not managed by our reg allocator.
-    if (it->second < 32)
+    if (offset < 32)
       return false;
 
-    ctx.deallocate(it->second);
+    ctx.deallocate(offset);
     if (reservedReg != 0
         && (spillCandidate.find(&intervals[reg]) != spillCandidate.end())) {
         spillCandidate.erase(&intervals[reg]);
         /* offset --> reg map should keep updated. */
-        offsetReg.erase(it->second);
+        offsetReg.erase(offset);
     }
 
     return true;
@@ -939,7 +1042,19 @@ namespace gbe
                                                     uint32_t grfOffset,
                                                     bool isVector)
   {
+     // OLD: Keep for parallel validation
      RA.insert(std::make_pair(reg, grfOffset));
+
+#if USE_PHASE5A_OPTIMIZATIONS
+     // NEW: Phase 5A RegisterMap - O(1) insertion
+     registerMap_.insert(reg, grfOffset);
+
+     // VALIDATION: Ensure both methods agree
+     if (phase5aValidationMode_) {
+       GBE_ASSERT(registerMap_.get(reg) == grfOffset);
+       GBE_ASSERT(registerMap_.contains(reg) == RA.contains(reg));
+     }
+#endif
 
      if (reservedReg != 0) {
 
@@ -1147,7 +1262,16 @@ namespace gbe
         if (remainSize <= 0)
           break;
 
+#if USE_PHASE5A_OPTIMIZATIONS
+        // NEW: Phase 5A RegisterMap - O(1) lookup
+        uint32_t offset = registerMap_.get(reg);
+        if (phase5aValidationMode_) {
+          GBE_ASSERT(offset == RA.find(reg)->second);
+        }
+#else
+        // OLD: std::map - O(log n) lookup
         uint32_t offset = RA.find(reg)->second;
+#endif
         uint32_t s; getRegAttrib(reg, s);
         nextOffset = offset + s;
 
@@ -1216,11 +1340,26 @@ namespace gbe
     bool direction = true;
     if (interval.conflictReg != 0) {
       // try to allocate conflict registers in top/bottom half.
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) lookup
+      if (registerMap_.contains(interval.conflictReg)) {
+        uint32_t conflictOffset = registerMap_.get(interval.conflictReg);
+        if (phase5aValidationMode_) {
+          GBE_ASSERT(RA.contains(interval.conflictReg));
+          GBE_ASSERT(conflictOffset == RA.find(interval.conflictReg)->second);
+        }
+        if (conflictOffset < HALF_REGISTER_FILE_OFFSET) {
+          direction = false;
+        }
+      }
+#else
+      // OLD: std::map - O(log n) lookup
       if (RA.contains(interval.conflictReg)) {
         if (RA.find(interval.conflictReg)->second < HALF_REGISTER_FILE_OFFSET) {
           direction = false;
         }
       }
+#endif
     }
     if (interval.b3OpAlign != 0) {
       alignment = (alignment + 15) & ~15;
@@ -1590,8 +1729,24 @@ do { \
       if(reg.physical == 1) {
         return reg;
       }
+
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) lookup (hot path!)
+      GBE_ASSERT(registerMap_.contains(reg.reg()));
+      const uint32_t grfOffset = registerMap_.get(reg.reg());
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        GBE_ASSERT(RA.contains(reg.reg()) != false);
+        auto it = RA.find(reg.reg());
+        GBE_ASSERT(it != RA.end());
+        GBE_ASSERT(it->second == grfOffset);
+      }
+#else
+      // OLD: std::map - O(log n) lookup
       GBE_ASSERT(RA.contains(reg.reg()) != false);
       const uint32_t grfOffset = RA.find(reg.reg())->second;
+#endif
       const uint32_t suboffset = reg.subphysical ? reg.nr * GEN_REG_SIZE + reg.subnr : 0;
       const GenRegister dst = setGenReg(reg, grfOffset + suboffset);
       if (reg.quarter != 0)

@@ -131,7 +131,8 @@ namespace gbe
     typedef const value_type& const_reference;
     typedef std::size_t size_type;
     typedef std::ptrdiff_t difference_type;
-    typedef typename std::allocator<void>::const_pointer void_allocator_ptr;
+    // C++17/20 fix: std::allocator<void>::const_pointer deprecated/removed
+    typedef const void* void_allocator_ptr;
     template<typename U>
     struct rebind { typedef Allocator<U> other; };
 

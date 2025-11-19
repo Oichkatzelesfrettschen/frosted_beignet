@@ -40,6 +40,28 @@
 #define CL_DEVICE_BUILT_IN_KERNELS 0x103F
 #endif
 
+/* Gen6 (Sandy Bridge) Device Configurations */
+static struct _cl_device_id intel_snb_gt1_device = {
+  .max_compute_unit = 6,         /* GT1: 6 EUs */
+  .max_thread_per_unit = 7,      /* Gen6 has 7 threads per EU */
+  .sub_slice_count = 1,          /* GT1 has 1 sub-slice */
+  .max_work_item_sizes = {256, 256, 256},  /* Conservative for Gen6 */
+  .max_work_group_size = 256,    /* Gen6 max work group size */
+  .max_clock_frequency = 850,    /* Typical SNB GPU clock */
+#include "cl_gen6_device.h"
+};
+
+static struct _cl_device_id intel_snb_gt2_device = {
+  .max_compute_unit = 12,        /* GT2: 12 EUs (maximum for Gen6) */
+  .max_thread_per_unit = 7,      /* Gen6 has 7 threads per EU */
+  .sub_slice_count = 2,          /* GT2 has 2 sub-slices */
+  .max_work_item_sizes = {512, 512, 512},
+  .max_work_group_size = 512,    /* GT2 can handle larger workgroups */
+  .max_clock_frequency = 850,    /* Typical SNB GPU clock */
+#include "cl_gen6_device.h"
+};
+
+/* Gen7 (Ivy Bridge) Device Configurations */
 static struct _cl_device_id intel_ivb_gt2_device = {
   .max_compute_unit = 16,
   .max_thread_per_unit = 8,
@@ -873,17 +895,37 @@ cfl_gt3_break:
       cl_intel_platform_enable_extension(ret, cl_khr_fp16_ext_id);
       break;
 
-    case PCI_CHIP_SANDYBRIDGE_BRIDGE:
+    /* Gen6 (Sandy Bridge) GT1 - 6 EUs */
     case PCI_CHIP_SANDYBRIDGE_GT1:
+    case PCI_CHIP_SANDYBRIDGE_M_GT1:
+      DECL_INFO_STRING(snb_gt1_break, intel_snb_gt1_device, name, "Intel(R) HD Graphics SandyBridge GT1");
+snb_gt1_break:
+      intel_snb_gt1_device.device_id = device_id;
+      intel_snb_gt1_device.platform = cl_get_platform_default();
+      ret = &intel_snb_gt1_device;
+      cl_intel_platform_get_default_extension(ret);
+      /* Gen6 does not support FP64 or FP16 extensions */
+      break;
+
+    /* Gen6 (Sandy Bridge) GT2 - 12 EUs */
     case PCI_CHIP_SANDYBRIDGE_GT2:
     case PCI_CHIP_SANDYBRIDGE_GT2_PLUS:
-    case PCI_CHIP_SANDYBRIDGE_BRIDGE_M:
-    case PCI_CHIP_SANDYBRIDGE_M_GT1:
     case PCI_CHIP_SANDYBRIDGE_M_GT2:
     case PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS:
-    case PCI_CHIP_SANDYBRIDGE_BRIDGE_S:
     case PCI_CHIP_SANDYBRIDGE_S_GT:
-      // Intel(R) HD Graphics SandyBridge not supported yet
+      DECL_INFO_STRING(snb_gt2_break, intel_snb_gt2_device, name, "Intel(R) HD Graphics SandyBridge GT2");
+snb_gt2_break:
+      intel_snb_gt2_device.device_id = device_id;
+      intel_snb_gt2_device.platform = cl_get_platform_default();
+      ret = &intel_snb_gt2_device;
+      cl_intel_platform_get_default_extension(ret);
+      /* Gen6 does not support FP64 or FP16 extensions */
+      break;
+
+    /* Bridge devices without GPU - not supported */
+    case PCI_CHIP_SANDYBRIDGE_BRIDGE:
+    case PCI_CHIP_SANDYBRIDGE_BRIDGE_M:
+    case PCI_CHIP_SANDYBRIDGE_BRIDGE_S:
       ret = NULL;
       break;
     default:

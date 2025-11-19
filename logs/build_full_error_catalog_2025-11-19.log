@@ -1,0 +1,1177 @@
+[  0%] Building CXX object backend/src/CMakeFiles/gbeinterp.dir/gbe_bin_interpreter.cpp.o
+[ 36%] Built target beignet_bitcode
+[ 36%] Built target metainfo
+[ 36%] Built target git_sha1.h
+[ 36%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/context_emit_helpers.cpp.o
+[ 36%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/program.cpp.o
+[ 36%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_sampler_fix.cpp.o
+/home/user/frosted_beignet/backend/src/backend/context_emit_helpers.cpp:10:10: fatal error: ir/kernel.hpp: No such file or directory
+   10 | #include "ir/kernel.hpp"        // For ir::Kernel (ctx.kernel)
+      |          ^~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:454: backend/src/CMakeFiles/gbe.dir/backend/context_emit_helpers.cpp.o] Error 1
+[ 36%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_bitcode_link.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_sampler_fix.cpp:24:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:482: backend/src/CMakeFiles/gbe.dir/llvm/llvm_sampler_fix.cpp.o] Error 1
+[ 36%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_gen_backend.cpp.o
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/backend/program.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/program.cpp:26,
+                 from /home/user/frosted_beignet/backend/src/gbe_bin_interpreter.cpp:31:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_bitcode_link.cpp:27:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+In file included from /home/user/frosted_beignet/backend/src/backend/gen_program.cpp:50,
+                 from /home/user/frosted_beignet/backend/src/gbe_bin_interpreter.cpp:32:
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp: At global scope:
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:113:34: error: 'GenFeature' has not been declared
+  113 |     virtual bool supportsFeature(GenFeature feature) const override;
+      |                                  ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:144:40: error: 'BarrierInstruction' in namespace 'gbe::ir' does not name a type; did you mean 'WaitInstruction'?
+  144 |     virtual void emitBarrier(const ir::BarrierInstruction &barrier) override;
+      |                                        ^~~~~~~~~~~~~~~~~~
+      |                                        WaitInstruction
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:91:22: error: 'virtual uint32_t gbe::Gen6Context::getMaxExecutionUnits() const' marked 'override', but does not override
+   91 |     virtual uint32_t getMaxExecutionUnits(void) const override {
+      |                      ^~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:102:22: error: 'virtual uint32_t gbe::Gen6Context::getPreferredSIMDWidth() const' marked 'override', but does not override
+  102 |     virtual uint32_t getPreferredSIMDWidth(void) const override {
+      |                      ^~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:113:18: error: 'virtual bool gbe::Gen6Context::supportsFeature(int) const' marked 'override', but does not override
+  113 |     virtual bool supportsFeature(GenFeature feature) const override;
+      |                  ^~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:119:22: error: 'virtual uint32_t gbe::Gen6Context::getCacheControl() const' marked 'override', but does not override
+  119 |     virtual uint32_t getCacheControl(void) const override;
+      |                      ^~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:125:18: error: 'virtual void gbe::Gen6Context::emitPrologue()' marked 'override', but does not override
+  125 |     virtual void emitPrologue(void) override;
+      |                  ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:131:18: error: 'virtual void gbe::Gen6Context::emitEpilogue()' marked 'override', but does not override
+  131 |     virtual void emitEpilogue(void) override;
+      |                  ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:138:18: error: 'virtual void gbe::Gen6Context::emitAtomic(const gbe::ir::AtomicInstruction&)' marked 'override', but does not override
+  138 |     virtual void emitAtomic(const ir::AtomicInstruction &atomic) override;
+      |                  ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:144:18: error: 'virtual void gbe::Gen6Context::emitBarrier(const int&)' marked 'override', but does not override
+  144 |     virtual void emitBarrier(const ir::BarrierInstruction &barrier) override;
+      |                  ^~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:151:18: error: 'virtual bool gbe::Gen6Context::allocateRegisters()' marked 'override', but does not override
+  151 |     virtual bool allocateRegisters(void) override;
+      |                  ^~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:496: backend/src/CMakeFiles/gbe.dir/llvm/llvm_bitcode_link.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_passes.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_gen_backend.cpp:74:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:510: backend/src/CMakeFiles/gbe.dir/llvm/llvm_gen_backend.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_scalarize.cpp.o
+make[2]: *** [backend/src/CMakeFiles/gbeinterp.dir/build.make:76: backend/src/CMakeFiles/gbeinterp.dir/gbe_bin_interpreter.cpp.o] Error 1
+make[2]: Target 'backend/src/CMakeFiles/gbeinterp.dir/build' not remade because of errors.
+make[1]: *** [CMakeFiles/Makefile2:268: backend/src/CMakeFiles/gbeinterp.dir/all] Error 2
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_intrinsic_lowering.cpp.o
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/backend/program.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/program.cpp:26:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_passes.cpp:33:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:524: backend/src/CMakeFiles/gbe.dir/llvm/llvm_passes.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_barrier_nodup.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_scalarize.cpp:62:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:538: backend/src/CMakeFiles/gbe.dir/llvm/llvm_scalarize.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_printf_parser.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/IR/PassInstrumentation.h:53,
+                 from /usr/lib/llvm-18/include/llvm/IR/PassManager.h:47,
+                 from /usr/lib/llvm-18/include/llvm/Analysis/AssumptionCache.h:22,
+                 from /usr/lib/llvm-18/include/llvm/Transforms/Utils/Cloning.h:22,
+                 from /home/user/frosted_beignet/backend/src/backend/program.cpp:41:
+/usr/lib/llvm-18/include/llvm/ADT/FunctionExtras.h: At global scope:
+/usr/lib/llvm-18/include/llvm/ADT/FunctionExtras.h:165:9: warning: 'using std::aligned_storage_t = union std::aligned_storage<24, 8>::type' is deprecated [-Wdeprecated-declarations]
+  165 |         InlineStorage;
+      |         ^~~~~~~~~~~~~
+In file included from /usr/include/c++/13/bits/move.h:37,
+                 from /usr/include/c++/13/bits/exception_ptr.h:41,
+                 from /usr/include/c++/13/exception:164,
+                 from /usr/include/c++/13/ios:41,
+                 from /usr/include/c++/13/ostream:40,
+                 from /usr/include/c++/13/iostream:41,
+                 from /home/user/frosted_beignet/backend/src/./sys/platform.hpp:26,
+                 from /home/user/frosted_beignet/backend/src/./sys/vector.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./ir/register.hpp:27,
+                 from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:27:
+/usr/include/c++/13/type_traits:2598:11: note: declared here
+ 2598 |     using aligned_storage_t _GLIBCXX23_DEPRECATED = typename aligned_storage<_Len, _Align>::type;
+      |           ^~~~~~~~~~~~~~~~~
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_intrinsic_lowering.cpp:23:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:552: backend/src/CMakeFiles/gbe.dir/llvm/llvm_intrinsic_lowering.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_profiling.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_barrier_nodup.cpp:31:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:566: backend/src/CMakeFiles/gbe.dir/llvm/llvm_barrier_nodup.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/ExpandConstantExpr.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_printf_parser.cpp:36:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:580: backend/src/CMakeFiles/gbe.dir/llvm/llvm_printf_parser.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/ExpandUtils.cpp.o
+/home/user/frosted_beignet/backend/src/llvm/llvm_profiling.cpp:38:10: fatal error: llvm/IR/CallSite.h: No such file or directory
+   38 | #include "llvm/IR/CallSite.h"
+      |          ^~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:594: backend/src/CMakeFiles/gbe.dir/llvm/llvm_profiling.cpp.o] Error 1
+[ 38%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/PromoteIntegers.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/ExpandConstantExpr.cpp:80:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:608: backend/src/CMakeFiles/gbe.dir/llvm/ExpandConstantExpr.cpp.o] Error 1
+[ 41%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/ExpandLargeIntegers.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/ExpandUtils.cpp:67:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:622: backend/src/CMakeFiles/gbe.dir/llvm/ExpandUtils.cpp.o] Error 1
+[ 41%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_device_enqueue.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/PromoteIntegers.cpp:87:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:636: backend/src/CMakeFiles/gbe.dir/llvm/PromoteIntegers.cpp.o] Error 1
+[ 41%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/StripAttributes.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/ExpandLargeIntegers.cpp:90:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:650: backend/src/CMakeFiles/gbe.dir/llvm/ExpandLargeIntegers.cpp.o] Error 1
+[ 41%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_to_gen.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_device_enqueue.cpp:19:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:664: backend/src/CMakeFiles/gbe.dir/llvm/llvm_device_enqueue.cpp.o] Error 1
+[ 41%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_loadstore_optimization.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/StripAttributes.cpp:72:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:678: backend/src/CMakeFiles/gbe.dir/llvm/StripAttributes.cpp.o] Error 1
+[ 41%] Building CXX object backend/src/CMakeFiles/gbe.dir/llvm/llvm_unroll.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_to_gen.cpp:25:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:692: backend/src/CMakeFiles/gbe.dir/llvm/llvm_to_gen.cpp.o] Error 1
+[ 41%] Building C object backend/src/CMakeFiles/gbe.dir/backend/gen/gen_mesa_disasm.c.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_loadstore_optimization.cpp:25:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+cc1: warning: command-line option '-fno-rtti' is valid for C++/D/ObjC++ but not for C
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:706: backend/src/CMakeFiles/gbe.dir/llvm/llvm_loadstore_optimization.cpp.o] Error 1
+[ 41%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_insn_selection.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/Analysis/CFGPrinter.h:22,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/llvm/llvm_unroll.cpp:22:
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:85:1: warning: multi-line comment [-Wcomment]
+   85 | ///         /   \
+      | ^
+/usr/lib/llvm-18/include/llvm/Analysis/BranchProbabilityInfo.h:88:1: warning: multi-line comment [-Wcomment]
+   88 | ///     /   \
+      | ^
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_insn_selection_optimize.cpp.o
+/home/user/frosted_beignet/backend/src/llvm/llvm_includes.hpp:73:10: fatal error: llvm/Support/TargetRegistry.h: No such file or directory
+   73 | #include "llvm/Support/TargetRegistry.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:720: backend/src/CMakeFiles/gbe.dir/llvm/llvm_unroll.cpp.o] Error 1
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_insn_selection_if_opt.cpp.o
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_insn_selection.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:98:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_insn_selection.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_insn_selection_optimize.cpp:2:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+/home/user/frosted_beignet/backend/src/backend/program.cpp: In function 'bool gbe::buildModuleFromSource(const char*, llvm::Module**, llvm::LLVMContext*, std::string, std::string, std::vector<std::__cxx11::basic_string<char> >&, size_t, char*, size_t*, uint32_t)':
+/home/user/frosted_beignet/backend/src/backend/program.cpp:698:47: error: cannot convert 'const char**' to 'llvm::ArrayRef<const char*>'
+  698 |                                               &args[0],
+In file included from /usr/lib/llvm-18/include/clang/Frontend/CompilerInstance.h:16,
+                 from /home/user/frosted_beignet/backend/src/backend/program.cpp:58:
+/usr/lib/llvm-18/include/clang/Frontend/CompilerInvocation.h:288:53: note:   initializing argument 2 of 'static bool clang::CompilerInvocation::CreateFromArgs(clang::CompilerInvocation&, llvm::ArrayRef<const char*>, clang::DiagnosticsEngine&, const char*)'
+  288 |                              ArrayRef<const char *> CommandLineArgs,
+      |                              ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/program.cpp:786:57: error: 'F_None' is not a member of 'llvm::sys::fs'; did you mean 'OF_None'?
+  786 |                                     err, llvm::sys::fs::F_None);
+      |                                                         ^~~~~~
+      |                                                         OF_None
+/home/user/frosted_beignet/backend/src/backend/program.cpp:795:57: error: 'F_None' is not a member of 'llvm::sys::fs'; did you mean 'OF_None'?
+  795 |                                     err, llvm::sys::fs::F_None);
+      |                                                         ^~~~~~
+      |                                                         OF_None
+/home/user/frosted_beignet/backend/src/backend/program.cpp: In function 'bool gbe::programCheckOption(const char*)':
+/home/user/frosted_beignet/backend/src/backend/program.cpp:1251:56: error: cannot convert 'const char**' to 'llvm::ArrayRef<const char*>'
+ 1251 |                                                        &args[0],
+/usr/lib/llvm-18/include/clang/Frontend/CompilerInvocation.h:288:53: note:   initializing argument 2 of 'static bool clang::CompilerInvocation::CreateFromArgs(clang::CompilerInvocation&, llvm::ArrayRef<const char*>, clang::DiagnosticsEngine&, const char*)'
+  288 |                              ArrayRef<const char *> CommandLineArgs,
+      |                              ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_insn_selection.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_insn_selection_if_opt.cpp:2:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_insn_scheduling.cpp.o
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_insn_selection_output.cpp.o
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_insn_selection.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_insn_scheduling.cpp:88:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_insn_selection.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_insn_selection_output.cpp:1:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:468: backend/src/CMakeFiles/gbe.dir/backend/program.cpp.o] Error 1
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_reg_allocation.cpp.o
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_context.cpp.o
+In file included from /home/user/frosted_beignet/backend/src/./ir/function.hpp:27,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:25:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'gbe::GenRegister gbe::Selection::Opaque::selReg(gbe::ir::Register, gbe::ir::Type) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:1264:24: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+ 1264 |     return GenRegister();
+      |                        ^
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:1264:24: note: '<anonymous>' declared here
+ 1264 |     return GenRegister();
+      |                        ^
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen6_context.cpp.o
+In file included from /home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:39:
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp: In member function 'size_t gbe::IntervalStore::memoryUsage() const':
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp:227:38: error: invalid application of 'sizeof' to incomplete type 'gbe::GenRegInterval'
+  227 |     bytes += intervals_.capacity() * sizeof(GenRegInterval);
+      |                                      ^~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp: In lambda function:
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp:280:35: error: invalid use of incomplete type '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+  280 |               return intervals_[a].minID < intervals_[b].minID;
+      |                                   ^
+In file included from /home/user/frosted_beignet/backend/src/./backend/gen_insn_selection.hpp:33,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:26:
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation.hpp:35:10: note: forward declaration of '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+   35 |   struct GenRegInterval; // Liveness interval for each register
+      |          ^~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp:280:57: error: invalid use of incomplete type '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+  280 |               return intervals_[a].minID < intervals_[b].minID;
+      |                                                         ^
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation.hpp:35:10: note: forward declaration of '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+   35 |   struct GenRegInterval; // Liveness interval for each register
+      |          ^~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp: In lambda function:
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp:296:35: error: invalid use of incomplete type '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+  296 |               return intervals_[a].maxID < intervals_[b].maxID;
+      |                                   ^
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation.hpp:35:10: note: forward declaration of '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+   35 |   struct GenRegInterval; // Liveness interval for each register
+      |          ^~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation_intervals.hpp:296:57: error: invalid use of incomplete type '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+  296 |               return intervals_[a].maxID < intervals_[b].maxID;
+      |                                                         ^
+/home/user/frosted_beignet/backend/src/./backend/gen_reg_allocation.hpp:35:10: note: forward declaration of '__gnu_cxx::__alloc_traits<std::allocator<gbe::GenRegInterval>, gbe::GenRegInterval>::value_type' {aka 'struct gbe::GenRegInterval'}
+   35 |   struct GenRegInterval; // Liveness interval for each register
+      |          ^~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./sys/vector.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./ir/register.hpp:27,
+                 from /home/user/frosted_beignet/backend/src/./ir/profile.hpp:27,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:24:
+/home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp: In member function 'bool gbe::GenRegAllocator::Opaque::createGenReg(const gbe::Selection&, gbe::GenRegInterval&)':
+/home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:405:36: warning: comparison of integer expressions of different signedness: 'int32_t' {aka 'int'} and 'unsigned int' [-Wsign-compare]
+  405 |               GBE_ASSERT(grfOffset == RA.find(holereg)->second);
+      |                          ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./sys/platform.hpp:201:43: note: in definition of macro 'UNLIKELY'
+  201 | #define UNLIKELY(x)     __builtin_expect((x),0)
+      |                                           ^
+/home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:405:15: note: in expansion of macro 'GBE_ASSERT'
+  405 |               GBE_ASSERT(grfOffset == RA.find(holereg)->second);
+      |               ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:406:48: warning: comparison of integer expressions of different signedness: 'uint32_t' {aka 'unsigned int'} and 'int32_t' {aka 'int'} [-Wsign-compare]
+  406 |               GBE_ASSERT(registerMap_.get(reg) == grfOffset);
+      |                          ~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./sys/platform.hpp:201:43: note: in definition of macro 'UNLIKELY'
+  201 | #define UNLIKELY(x)     __builtin_expect((x),0)
+      |                                           ^
+/home/user/frosted_beignet/backend/src/backend/gen_reg_allocation.cpp:406:15: note: in expansion of macro 'GBE_ASSERT'
+  406 |               GBE_ASSERT(registerMap_.get(reg) == grfOffset);
+      |               ^~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_context.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_context.cpp:25:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+In file included from /usr/include/c++/13/bits/char_traits.h:57,
+                 from /usr/include/c++/13/ios:42,
+                 from /usr/include/c++/13/ostream:40,
+                 from /usr/include/c++/13/iostream:41,
+                 from /home/user/frosted_beignet/backend/src/./sys/platform.hpp:26,
+                 from /home/user/frosted_beignet/backend/src/./sys/vector.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./ir/register.hpp:27,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_insn_selection.hpp:28:
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::read64Legacy(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4402:41:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::read64Legacy(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4402:41: note: '<anonymous>' declared here
+ 4402 |         vector<GenRegister> tmp(valueNum);
+      |                                         ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::StoreInstructionPattern::write64Legacy(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5151:41:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::StoreInstructionPattern::write64Legacy(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5151:41: note: '<anonymous>' declared here
+ 5151 |         vector<GenRegister> tmp(valueNum);
+      |                                         ^
+/home/user/frosted_beignet/backend/src/backend/gen_context.cpp: In member function 'virtual bool gbe::GenContext::patchBranches()':
+/home/user/frosted_beignet/backend/src/backend/gen_context.cpp:150:57: warning: comparison of integer expressions of different signedness: 'unsigned int' and 'int' [-Wsign-compare]
+  150 |         if (((jip - insn_id) > 32767 || (jip - insn_id) < -32768) ||
+      |                                         ~~~~~~~~~~~~~~~~^~~~~~~~
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:818: backend/src/CMakeFiles/gbe.dir/backend/gen_reg_allocation.cpp.o] Error 1
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen75_context.cpp.o
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_context.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:32,
+                 from /home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:25:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp: At global scope:
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:113:34: error: 'GenFeature' has not been declared
+  113 |     virtual bool supportsFeature(GenFeature feature) const override;
+      |                                  ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:144:40: error: 'BarrierInstruction' in namespace 'gbe::ir' does not name a type; did you mean 'WaitInstruction'?
+  144 |     virtual void emitBarrier(const ir::BarrierInstruction &barrier) override;
+      |                                        ^~~~~~~~~~~~~~~~~~
+      |                                        WaitInstruction
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:91:22: error: 'virtual uint32_t gbe::Gen6Context::getMaxExecutionUnits() const' marked 'override', but does not override
+   91 |     virtual uint32_t getMaxExecutionUnits(void) const override {
+      |                      ^~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:102:22: error: 'virtual uint32_t gbe::Gen6Context::getPreferredSIMDWidth() const' marked 'override', but does not override
+  102 |     virtual uint32_t getPreferredSIMDWidth(void) const override {
+      |                      ^~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:113:18: error: 'virtual bool gbe::Gen6Context::supportsFeature(int) const' marked 'override', but does not override
+  113 |     virtual bool supportsFeature(GenFeature feature) const override;
+      |                  ^~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:119:22: error: 'virtual uint32_t gbe::Gen6Context::getCacheControl() const' marked 'override', but does not override
+  119 |     virtual uint32_t getCacheControl(void) const override;
+      |                      ^~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:125:18: error: 'virtual void gbe::Gen6Context::emitPrologue()' marked 'override', but does not override
+  125 |     virtual void emitPrologue(void) override;
+      |                  ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:131:18: error: 'virtual void gbe::Gen6Context::emitEpilogue()' marked 'override', but does not override
+  131 |     virtual void emitEpilogue(void) override;
+      |                  ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:138:18: error: 'virtual void gbe::Gen6Context::emitAtomic(const gbe::ir::AtomicInstruction&)' marked 'override', but does not override
+  138 |     virtual void emitAtomic(const ir::AtomicInstruction &atomic) override;
+      |                  ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:144:18: error: 'virtual void gbe::Gen6Context::emitBarrier(const int&)' marked 'override', but does not override
+  144 |     virtual void emitBarrier(const ir::BarrierInstruction &barrier) override;
+      |                  ^~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:151:18: error: 'virtual bool gbe::Gen6Context::allocateRegisters()' marked 'override', but does not override
+  151 |     virtual bool allocateRegisters(void) override;
+      |                  ^~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:66:8: error: 'bool gbe::Gen6Context::supportsFeature' is not a static data member of 'class gbe::Gen6Context'
+   66 |   bool Gen6Context::supportsFeature(GenFeature feature) const
+      |        ^~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:66:37: error: 'GenFeature' was not declared in this scope
+   66 |   bool Gen6Context::supportsFeature(GenFeature feature) const
+      |                                     ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp: In member function 'virtual void gbe::Gen6Context::emitPrologue()':
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:142:17: error: 'emitPrologue' is not a member of 'gbe::GenContext'
+  142 |     GenContext::emitPrologue();
+      |                 ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp: In member function 'virtual void gbe::Gen6Context::emitEpilogue()':
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:157:17: error: 'emitEpilogue' is not a member of 'gbe::GenContext'
+  157 |     GenContext::emitEpilogue();
+      |                 ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp: In member function 'virtual void gbe::Gen6Context::emitAtomic(const gbe::ir::AtomicInstruction&)':
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:175:16: error: 'ATOMIC_OP_MIN' is not a member of 'gbe::ir'; did you mean 'ATOMIC_OP_UMIN'?
+  175 |       case ir::ATOMIC_OP_MIN:
+      |                ^~~~~~~~~~~~~
+      |                ATOMIC_OP_UMIN
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:176:16: error: 'ATOMIC_OP_MAX' is not a member of 'gbe::ir'; did you mean 'ATOMIC_OP_UMAX'?
+  176 |       case ir::ATOMIC_OP_MAX:
+      |                ^~~~~~~~~~~~~
+      |                ATOMIC_OP_UMAX
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:183:21: error: 'emitAtomic' is not a member of 'gbe::GenContext'
+  183 |         GenContext::emitAtomic(atomic);
+      |                     ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp: At global scope:
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:197:43: error: 'BarrierInstruction' in namespace 'gbe::ir' does not name a type; did you mean 'WaitInstruction'?
+  197 |   void Gen6Context::emitBarrier(const ir::BarrierInstruction &barrier)
+      |                                           ^~~~~~~~~~~~~~~~~~
+      |                                           WaitInstruction
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp: In member function 'virtual void gbe::Gen6Context::emitBarrier(const int&)':
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:201:17: error: 'emitBarrier' is not a member of 'gbe::GenContext'
+  201 |     GenContext::emitBarrier(barrier);
+      |                 ^~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp: In member function 'virtual bool gbe::Gen6Context::allocateRegisters()':
+/home/user/frosted_beignet/backend/src/backend/gen6_context.cpp:217:24: error: 'allocateRegisters' is not a member of 'gbe::GenContext'
+  217 |     return GenContext::allocateRegisters();
+      |                        ^~~~~~~~~~~~~~~~~
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:846: backend/src/CMakeFiles/gbe.dir/backend/gen6_context.cpp.o] Error 1
+[ 44%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen8_context.cpp.o
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'bool gbe::VmeInstructionPattern::emitOne(gbe::Selection::Opaque&, const gbe::ir::VmeInstruction&, bool&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7045:40,
+    inlined from 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::VmeInstructionPattern; U = gbe::ir::VmeInstruction]' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:3043:47:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::VmeInstructionPattern; U = gbe::ir::VmeInstruction]':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7045:40: note: '<anonymous>' declared here
+ 7045 |       vector<GenRegister> dst(selDstNum);
+      |                                        ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'bool gbe::VmeInstructionPattern::emitOne(gbe::Selection::Opaque&, const gbe::ir::VmeInstruction&, bool&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7046:44,
+    inlined from 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::VmeInstructionPattern; U = gbe::ir::VmeInstruction]' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:3043:47:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::VmeInstructionPattern; U = gbe::ir::VmeInstruction]':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7046:44: note: '<anonymous>' declared here
+ 7046 |       vector<GenRegister> payloadVal(srcNum);
+      |                                            ^
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_context.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen75_context.hpp:25,
+                 from /home/user/frosted_beignet/backend/src/backend/gen75_context.cpp:23:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'bool gbe::ImeInstructionPattern::emitOne(gbe::Selection::Opaque&, const gbe::ir::ImeInstruction&, bool&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7086:40,
+    inlined from 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::ImeInstructionPattern; U = gbe::ir::ImeInstruction]' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:3043:47:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::ImeInstructionPattern; U = gbe::ir::ImeInstruction]':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7086:40: note: '<anonymous>' declared here
+ 7086 |       vector<GenRegister> dst(selDstNum);
+      |                                        ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'bool gbe::ImeInstructionPattern::emitOne(gbe::Selection::Opaque&, const gbe::ir::ImeInstruction&, bool&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7087:44,
+    inlined from 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::ImeInstructionPattern; U = gbe::ir::ImeInstruction]' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:3043:47:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::ImeInstructionPattern; U = gbe::ir::ImeInstruction]':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:7087:44: note: '<anonymous>' declared here
+ 7087 |       vector<GenRegister> payloadVal(srcNum);
+      |                                            ^
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_context.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen8_context.hpp:25,
+                 from /home/user/frosted_beignet/backend/src/backend/gen8_context.cpp:23:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen9_context.cpp.o
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'bool gbe::SampleInstructionPattern::emitOne(gbe::Selection::Opaque&, const gbe::ir::SampleInstruction&, bool&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:6995:47,
+    inlined from 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::SampleInstructionPattern; U = gbe::ir::SampleInstruction]' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:3043:47:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::SampleInstructionPattern; U = gbe::ir::SampleInstruction]':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:6995:47: note: '<anonymous>' declared here
+ 6995 |       vector<GenRegister> dst(insn.getDstNum());
+      |                                               ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'bool gbe::BitCastInstructionPattern::emitOne(gbe::Selection::Opaque&, const gbe::ir::BitCastInstruction&, bool&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5630:38,
+    inlined from 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::BitCastInstructionPattern; U = gbe::ir::BitCastInstruction]' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:3043:47:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'bool gbe::OneToManyPattern<T, U>::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const [with T = gbe::BitCastInstructionPattern; U = gbe::ir::BitCastInstruction]':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5630:38: note: '<anonymous>' declared here
+ 5630 |       vector<GenRegister> tmp(wideNum);
+      |                                      ^
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_context.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen8_context.hpp:25,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen9_context.hpp:25,
+                 from /home/user/frosted_beignet/backend/src/backend/gen9_context.cpp:23:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_program.cpp.o
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::read64Stateless(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4418:39:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::read64Stateless(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4418:39: note: '<anonymous>' declared here
+ 4418 |       vector<GenRegister> tmp(valueNum);
+      |                                       ^
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_insn_compact.cpp.o
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen_encoder.cpp.o
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::StoreInstructionPattern::write64Stateless(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5169:39:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::StoreInstructionPattern::write64Stateless(gbe::Selection::Opaque&, gbe::GenRegister, gbe::vector<gbe::GenRegister>&) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5169:39: note: '<anonymous>' declared here
+ 5169 |       vector<GenRegister> tmp(valueNum);
+      |                                       ^
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen6_encoder.cpp.o
+In file included from /usr/lib/llvm-18/include/llvm/IR/PassInstrumentation.h:53,
+                 from /usr/lib/llvm-18/include/llvm/IR/PassManager.h:47,
+                 from /usr/lib/llvm-18/include/llvm/Analysis/AssumptionCache.h:22,
+                 from /usr/lib/llvm-18/include/llvm/Transforms/Utils/Cloning.h:22,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_program.cpp:33:
+/usr/lib/llvm-18/include/llvm/ADT/FunctionExtras.h:165:9: warning: 'using std::aligned_storage_t = union std::aligned_storage<24, 8>::type' is deprecated [-Wdeprecated-declarations]
+  165 |         InlineStorage;
+      |         ^~~~~~~~~~~~~
+In file included from /usr/include/c++/13/bits/stl_pair.h:60,
+                 from /usr/include/c++/13/tuple:38,
+                 from /usr/lib/llvm-18/include/llvm/ADT/DenseMapInfo.h:20,
+                 from /usr/lib/llvm-18/include/llvm/ADT/StringRef.h:12,
+                 from /usr/lib/llvm-18/include/llvm/IR/DiagnosticHandler.h:15,
+                 from /usr/lib/llvm-18/include/llvm/IR/LLVMContext.h:18,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_program.cpp:27:
+/usr/include/c++/13/type_traits:2598:11: note: declared here
+ 2598 |     using aligned_storage_t _GLIBCXX23_DEPRECATED = typename aligned_storage<_Len, _Align>::type;
+      |           ^~~~~~~~~~~~~~~~~
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::StoreInstructionPattern::emitByteScatter(gbe::Selection::Opaque&, const gbe::ir::StoreInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace, bool) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5348:43:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::StoreInstructionPattern::emitByteScatter(gbe::Selection::Opaque&, const gbe::ir::StoreInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace, bool) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5348:43: note: '<anonymous>' declared here
+ 5348 |         vector<GenRegister> value(valueNum);
+      |                                           ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::StoreInstructionPattern::emitByteScatter(gbe::Selection::Opaque&, const gbe::ir::StoreInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace, bool) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5359:42:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::StoreInstructionPattern::emitByteScatter(gbe::Selection::Opaque&, const gbe::ir::StoreInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace, bool) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5359:42: note: '<anonymous>' declared here
+ 5359 |         vector<GenRegister> tmp(tmpRegNum);
+      |                                          ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::StoreInstructionPattern::emitWrite64(gbe::Selection::Opaque&, const gbe::ir::StoreInstruction&, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5215:39,
+    inlined from 'virtual bool gbe::StoreInstructionPattern::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5490:26:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'virtual bool gbe::StoreInstructionPattern::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5215:39: note: '<anonymous>' declared here
+ 5215 |       vector<GenRegister> src(valueNum);
+      |                                       ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::StoreInstructionPattern::emitUntypedWrite(gbe::Selection::Opaque&, const gbe::ir::StoreInstruction&, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5134:41,
+    inlined from 'virtual bool gbe::StoreInstructionPattern::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5492:31:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'virtual bool gbe::StoreInstructionPattern::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5134:41: note: '<anonymous>' declared here
+ 5134 |       vector<GenRegister> value(valueNum);
+      |                                         ^
+In file included from /home/user/frosted_beignet/backend/src/backend/gen6_encoder.cpp:65:
+/home/user/frosted_beignet/backend/src/./backend/gen6_instruction.hpp:303:45: error: static assertion failed: Gen6NativeInstruction must be exactly 128 bits (16 bytes)
+  303 | static_assert(sizeof(Gen6NativeInstruction) == 16,
+      |               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_instruction.hpp:303:45: note: the comparison reduces to '(20 == 16)'
+/home/user/frosted_beignet/backend/src/backend/gen6_encoder.cpp: In member function 'virtual void gbe::Gen6Encoder::setHeader(GenNativeInstruction*)':
+/home/user/frosted_beignet/backend/src/backend/gen6_encoder.cpp:102:34: error: 'struct Gen6NativeInstruction::<unnamed struct>::<unnamed union>::<unnamed>' has no member named 'flag_reg_nr'
+  102 |       gen6_insn->inst.bits1.da16.flag_reg_nr = this->curr.flag & 0x1;
+      |                                  ^~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen6_encoder.cpp: In member function 'bool gbe::Gen6Encoder::isSupportedOnGen6(uint32_t) const':
+/home/user/frosted_beignet/backend/src/backend/gen6_encoder.cpp:504:12: error: 'GEN_OPCODE_BFI1' was not declared in this scope; did you mean 'GEN_OPCODE_WAIT'?
+  504 |       case GEN_OPCODE_BFI1:
+      |            ^~~~~~~~~~~~~~~
+      |            GEN_OPCODE_WAIT
+/home/user/frosted_beignet/backend/src/backend/gen6_encoder.cpp:505:12: error: 'GEN_OPCODE_BFI2' was not declared in this scope; did you mean 'GEN_OPCODE_WAIT'?
+  505 |       case GEN_OPCODE_BFI2:
+      |            ^~~~~~~~~~~~~~~
+      |            GEN_OPCODE_WAIT
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitRead64(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4461:39:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::emitRead64(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, gbe::GenRegister, gbe::ir::AddressSpace) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4461:39: note: '<anonymous>' declared here
+ 4461 |       vector<GenRegister> dst(valueNum);
+      |                                       ^
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:944: backend/src/CMakeFiles/gbe.dir/backend/gen6_encoder.cpp.o] Error 1
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen7_encoder.cpp.o
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen75_encoder.cpp.o
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitAlignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4573:39:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::emitAlignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4573:39: note: '<anonymous>' declared here
+ 4573 |       vector<GenRegister> dst(valueNum);
+      |                                       ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitAlignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4580:40:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::emitAlignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4580:40: note: '<anonymous>' declared here
+ 4580 |       vector<GenRegister> tmp(tmpRegNum);
+      |                                        ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4752:43:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4752:43: note: '<anonymous>' declared here
+ 4752 |           vector<GenRegister> dst(valueNum);
+      |                                           ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4759:52:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4759:52: note: '<anonymous>' declared here
+ 4759 |           vector<GenRegister> tmp(effectDataNum + 1);
+      |                                                    ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4760:55:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4760:55: note: '<anonymous>' declared here
+ 4760 |           vector<GenRegister> effectData(effectDataNum);
+      |                                                       ^
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4808:43:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In function 'void gbe::LoadInstructionPattern::emitUnalignedByteGather(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, uint32_t, gbe::GenRegister, gbe::ir::AddressSpace) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4808:43: note: '<anonymous>' declared here
+ 4808 |           vector<GenRegister> dst(valueNum);
+      |                                           ^
+In file included from /home/user/frosted_beignet/backend/src/./ir/instruction.hpp:28,
+                 from /home/user/frosted_beignet/backend/src/./backend/context.hpp:23,
+                 from /home/user/frosted_beignet/backend/src/./backend/program.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_program.hpp:29,
+                 from /home/user/frosted_beignet/backend/src/backend/gen_program.cpp:48:
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp: In constructor 'gbe::ir::Immediate::Immediate(gbe::ir::half*, uint32_t)':
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:159:13: warning: 'void* memcpy(void*, const void*, size_t)' writing to an object of non-trivially copyable type 'class gbe::ir::half'; use copy-assignment or copy-initialization instead [-Wclass-memaccess]
+  159 |       memcpy(this->data.FIELD, FIELD, ELEMNUM * getTypeSize()); \
+      |       ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./ir/immediate.hpp:172:5: note: in expansion of macro 'DECL_CONSTRUCTOR'
+  172 |     DECL_CONSTRUCTOR(half, f16, TYPE_HALF, elemNum)
+      |     ^~~~~~~~~~~~~~~~
+In file included from /home/user/frosted_beignet/backend/src/./ir/immediate.hpp:30:
+/home/user/frosted_beignet/backend/src/./ir/half.hpp:34:9: note: 'class gbe::ir::half' declared here
+   34 |   class half
+      |         ^~~~
+In file included from /home/user/frosted_beignet/backend/src/backend/gen_program.cpp:50:
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp: At global scope:
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:113:34: error: 'GenFeature' has not been declared
+  113 |     virtual bool supportsFeature(GenFeature feature) const override;
+      |                                  ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:144:40: error: 'BarrierInstruction' in namespace 'gbe::ir' does not name a type; did you mean 'WaitInstruction'?
+  144 |     virtual void emitBarrier(const ir::BarrierInstruction &barrier) override;
+      |                                        ^~~~~~~~~~~~~~~~~~
+      |                                        WaitInstruction
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:91:22: error: 'virtual uint32_t gbe::Gen6Context::getMaxExecutionUnits() const' marked 'override', but does not override
+   91 |     virtual uint32_t getMaxExecutionUnits(void) const override {
+      |                      ^~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:102:22: error: 'virtual uint32_t gbe::Gen6Context::getPreferredSIMDWidth() const' marked 'override', but does not override
+  102 |     virtual uint32_t getPreferredSIMDWidth(void) const override {
+      |                      ^~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:113:18: error: 'virtual bool gbe::Gen6Context::supportsFeature(int) const' marked 'override', but does not override
+  113 |     virtual bool supportsFeature(GenFeature feature) const override;
+      |                  ^~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:119:22: error: 'virtual uint32_t gbe::Gen6Context::getCacheControl() const' marked 'override', but does not override
+  119 |     virtual uint32_t getCacheControl(void) const override;
+      |                      ^~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:125:18: error: 'virtual void gbe::Gen6Context::emitPrologue()' marked 'override', but does not override
+  125 |     virtual void emitPrologue(void) override;
+      |                  ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:131:18: error: 'virtual void gbe::Gen6Context::emitEpilogue()' marked 'override', but does not override
+  131 |     virtual void emitEpilogue(void) override;
+      |                  ^~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:138:18: error: 'virtual void gbe::Gen6Context::emitAtomic(const gbe::ir::AtomicInstruction&)' marked 'override', but does not override
+  138 |     virtual void emitAtomic(const ir::AtomicInstruction &atomic) override;
+      |                  ^~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:144:18: error: 'virtual void gbe::Gen6Context::emitBarrier(const int&)' marked 'override', but does not override
+  144 |     virtual void emitBarrier(const ir::BarrierInstruction &barrier) override;
+      |                  ^~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/./backend/gen6_context.hpp:151:18: error: 'virtual bool gbe::Gen6Context::allocateRegisters()' marked 'override', but does not override
+  151 |     virtual bool allocateRegisters(void) override;
+      |                  ^~~~~~~~~~~~~~~~~
+In function 'constexpr decltype (::new(void*(0)) _Tp) std::construct_at(_Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}]',
+    inlined from 'static constexpr std::_Require<std::__and_<std::__not_<typename std::allocator_traits< <template-parameter-1-1> >::__construct_helper<_Tp, _Args>::type>, std::is_constructible<_Tp, _Args ...> > > std::allocator_traits< <template-parameter-1-1> >::_S_construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:278:21,
+    inlined from 'static constexpr decltype (std::allocator_traits< <template-parameter-1-1> >::_S_construct(__a, __p, (forward<_Args>)(std::allocator_traits< <template-parameter-1-1> >::construct::__args)...)) std::allocator_traits< <template-parameter-1-1> >::construct(_Alloc&, _Tp*, _Args&& ...) [with _Tp = gbe::GenRegister; _Args = {const gbe::GenRegister&}; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/alloc_traits.h:379:16,
+    inlined from 'constexpr _ForwardIterator std::__uninitialized_fill_n_a(_ForwardIterator, _Size, const _Tp&, _Allocator&) [with _ForwardIterator = gbe::GenRegister*; _Size = long unsigned int; _Tp = gbe::GenRegister; _Allocator = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_uninitialized.h:450:25,
+    inlined from 'constexpr void std::vector<_Tp, _Alloc>::_M_fill_initialize(size_type, const value_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:1707:33,
+    inlined from 'constexpr std::vector<_Tp, _Alloc>::vector(size_type, const value_type&, const allocator_type&) [with _Tp = gbe::GenRegister; _Alloc = gbe::Allocator<gbe::GenRegister>]' at /usr/include/c++/13/bits/stl_vector.h:572:27,
+    inlined from 'gbe::vector<T>::vector(size_type, const T&, const allocator_type&) [with T = gbe::GenRegister]' at /home/user/frosted_beignet/backend/src/./sys/vector.hpp:57:30,
+    inlined from 'void gbe::LoadInstructionPattern::emitUntypedRead(gbe::Selection::Opaque&, const gbe::ir::LoadInstruction&, gbe::GenRegister, gbe::ir::AddressSpace) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4351:39,
+    inlined from 'virtual bool gbe::LoadInstructionPattern::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const' at /home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:5004:32:
+/usr/include/c++/13/bits/stl_construct.h:97:14: warning: '<anonymous>' may be used uninitialized [-Wmaybe-uninitialized]
+   97 |     { return ::new((void*)__location) _Tp(std::forward<_Args>(__args)...); }
+      |              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp: In member function 'virtual bool gbe::LoadInstructionPattern::emit(gbe::Selection::Opaque&, gbe::SelectionDAG&) const':
+/home/user/frosted_beignet/backend/src/backend/gen_insn_selection.cpp:4351:39: note: '<anonymous>' declared here
+ 4351 |       vector<GenRegister> dst(valueNum);
+      |                                       ^
+In file included from /home/user/frosted_beignet/backend/src/backend/gen_program.cpp:61:
+/home/user/frosted_beignet/backend/src/./llvm/llvm_gen_backend.hpp:133:9: error: 'BasicBlockPass' in namespace 'llvm' does not name a type; did you mean 'BasicBlock'?
+  133 |   llvm::BasicBlockPass *createRemoveGEPPass(const ir::Unit &unit);
+      |         ^~~~~~~~~~~~~~
+      |         BasicBlock
+/home/user/frosted_beignet/backend/src/./llvm/llvm_gen_backend.hpp:136:9: error: 'BasicBlockPass' in namespace 'llvm' does not name a type; did you mean 'BasicBlock'?
+  136 |   llvm::BasicBlockPass *createLoadStoreOptimizationPass();
+      |         ^~~~~~~~~~~~~~
+      |         BasicBlock
+/home/user/frosted_beignet/backend/src/./llvm/llvm_gen_backend.hpp:144:9: error: 'BasicBlockPass' in namespace 'llvm' does not name a type; did you mean 'BasicBlock'?
+  144 |   llvm::BasicBlockPass *createIntrinsicLoweringPass();
+      |         ^~~~~~~~~~~~~~
+      |         BasicBlock
+In file included from /usr/include/c++/13/cassert:44,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen_encoder.hpp:58,
+                 from /home/user/frosted_beignet/backend/src/./backend/gen7_encoder.hpp:25,
+                 from /home/user/frosted_beignet/backend/src/backend/gen7_encoder.cpp:28:
+/home/user/frosted_beignet/backend/src/backend/gen7_encoder.cpp: In member function 'virtual void gbe::Gen7Encoder::alu3(uint32_t, gbe::GenRegister, gbe::GenRegister, gbe::GenRegister, gbe::GenRegister)':
+/home/user/frosted_beignet/backend/src/backend/gen7_encoder.cpp:198:23: warning: suggest parentheses around assignment used as truth value [-Wparentheses]
+  198 |      assert(dest.type = GEN_TYPE_F);
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen8_encoder.cpp.o
+[ 47%] Building CXX object backend/src/CMakeFiles/gbe.dir/backend/gen9_encoder.cpp.o
+make[2]: *** [backend/src/CMakeFiles/gbe.dir/build.make:902: backend/src/CMakeFiles/gbe.dir/backend/gen_program.cpp.o] Error 1
+make[2]: Target 'backend/src/CMakeFiles/gbe.dir/build' not remade because of errors.
+make[1]: *** [CMakeFiles/Makefile2:242: backend/src/CMakeFiles/gbe.dir/all] Error 2
+make[1]: Target 'all' not remade because of errors.
+make: *** [Makefile:156: all] Error 2
+make: Target 'default_target' not remade because of errors.

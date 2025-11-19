@@ -125,6 +125,8 @@ set (GBE_SRC
     backend/gen_reg_allocation.hpp
     backend/gen_context.cpp
     # backend/gen_context.cpp # Removed duplicate line
+    backend/gen6_context.hpp
+    backend/gen6_context.cpp
     backend/gen75_context.hpp
     backend/gen75_context.cpp
     backend/gen8_context.hpp
@@ -140,10 +142,15 @@ set (GBE_SRC
     backend/gen_insn_compact.cpp
     backend/gen_encoder.hpp
     backend/gen_encoder.cpp
+    backend/gen6_instruction.hpp
+    backend/gen6_encoder.hpp
+    backend/gen6_encoder.cpp
+    backend/gen7_instruction.hpp
     backend/gen7_encoder.hpp
     backend/gen7_encoder.cpp
     backend/gen75_encoder.hpp
     backend/gen75_encoder.cpp
+    backend/gen8_instruction.hpp
     backend/gen8_encoder.hpp
     backend/gen8_encoder.cpp
     backend/gen9_encoder.hpp

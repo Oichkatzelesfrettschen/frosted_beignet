@@ -251,6 +251,232 @@ error:
   goto exit;
 }
 
+/* ========================================================================
+ * Gen6 (Sandy Bridge) GPU Functions
+ * ======================================================================== */
+
+static void
+intel_gpgpu_select_pipeline_gen6(intel_gpgpu_t *gpgpu)
+{
+  /* Gen6 uses same pipeline selection as Gen7 */
+  BEGIN_BATCH(gpgpu->batch, 1);
+  OUT_BATCH(gpgpu->batch, CMD_PIPELINE_SELECT | PIPELINE_SELECT_GPGPU);
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+static uint32_t
+intel_gpgpu_get_cache_ctrl_gen6()
+{
+  /* Gen6 uses 2-bit cache control encoding
+   * 0x3 = Write-back cache policy (best performance)
+   * This differs from Gen7's 4-bit encoding */
+  return 0x3;
+}
+
+static void
+intel_gpgpu_set_base_address_gen6(intel_gpgpu_t *gpgpu)
+{
+  /* Gen6 STATE_BASE_ADDRESS command - 10 dwords like Gen7
+   * but with simpler cache control (2-bit vs 4-bit) */
+  const uint32_t def_cc = cl_gpgpu_get_cache_ctrl();
+  BEGIN_BATCH(gpgpu->batch, 10);
+  OUT_BATCH(gpgpu->batch, CMD_STATE_BASE_ADDRESS | 8);
+
+  /* General State Base Address - with cache control */
+  OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY);
+
+  /* Surface State Base Address - point to surface heap
+   * Gen6 requires 4KB alignment like Gen7 */
+  assert(gpgpu->aux_offset.surface_heap_offset % 4096 == 0);
+  OUT_RELOC(gpgpu->batch, gpgpu->aux_buf.bo,
+            I915_GEM_DOMAIN_INSTRUCTION,
+            I915_GEM_DOMAIN_INSTRUCTION,
+            gpgpu->aux_offset.surface_heap_offset + (def_cc << 4) | BASE_ADDRESS_MODIFY);
+
+  /* Dynamic State Base Address */
+  OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY);
+
+  /* Indirect Object Base Address */
+  OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY);
+
+  /* Instruction Base Address */
+  OUT_BATCH(gpgpu->batch, 0 | (def_cc << 4) | BASE_ADDRESS_MODIFY);
+
+  /* Upper bounds - same workaround as Gen7 for border color */
+  OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
+  OUT_BATCH(gpgpu->batch, 0xfffff000 | BASE_ADDRESS_MODIFY);
+  OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
+  OUT_BATCH(gpgpu->batch, 0 | BASE_ADDRESS_MODIFY);
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+static void
+intel_gpgpu_load_vfe_state_gen6(intel_gpgpu_t *gpgpu)
+{
+  /* Gen6 VFE (Virtual Front End) state - 8 dwords like Gen7
+   * Controls thread dispatch and scratch memory */
+  int32_t scratch_index;
+  BEGIN_BATCH(gpgpu->batch, 8);
+  OUT_BATCH(gpgpu->batch, CMD_MEDIA_STATE_POINTERS | (8-2));
+
+  /* Scratch space pointer if needed */
+  if(gpgpu->per_thread_scratch > 0) {
+    scratch_index = intel_gpgpu_get_scratch_index(gpgpu->per_thread_scratch);
+    OUT_RELOC(gpgpu->batch, gpgpu->scratch_b.bo,
+              I915_GEM_DOMAIN_RENDER,
+              I915_GEM_DOMAIN_RENDER,
+              scratch_index);
+  }
+  else {
+    OUT_BATCH(gpgpu->batch, 0);
+  }
+
+  /* Max threads | URB entries | GPGPU mode
+   * Gen6 has max 12 EUs with 7 threads each = 84 threads max
+   * Use reset gateway and bypass gateway for Gen6 */
+  OUT_BATCH(gpgpu->batch, 0 | ((gpgpu->max_threads - 1) << 16) | (0 << 8) | 0xc4);
+  OUT_BATCH(gpgpu->batch, 0);
+
+  /* CURBE allocation size */
+  OUT_BATCH(gpgpu->batch, intel_gpgpu_get_curbe_size(gpgpu));
+  OUT_BATCH(gpgpu->batch, 0);
+  OUT_BATCH(gpgpu->batch, 0);
+  OUT_BATCH(gpgpu->batch, 0);
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+static int32_t
+intel_gpgpu_get_scratch_index_gen6(uint32_t size)
+{
+  /* Gen6 scratch buffer size encoding - same as Gen7
+   * Size must be power of 2, encodes as log2(size/1024) */
+  assert(size > 0 && size <= (2 << 20));
+  assert((size & (size - 1)) == 0);
+  size = size >> 10;
+  uint32_t index = 0;
+  while((size >>= 1) > 0)
+    index++;
+  return index;
+}
+
+static void
+intel_gpgpu_setup_bti_gen6(intel_gpgpu_t *gpgpu, drm_intel_bo *buf,
+                           uint32_t internal_offset, size_t size,
+                           unsigned char index, uint32_t format)
+{
+  /* Gen6 Binding Table Index setup
+   * Gen6 can reuse Gen7 surface state structure */
+  assert(size <= (2ul<<30));
+  size_t s = size - 1;
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual +
+                         gpgpu->aux_offset.surface_heap_offset;
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+  memset(ss, 0, sizeof(*ss));
+
+  ss->ss0.surface_type = I965_SURFACE_BUFFER;
+  ss->ss0.surface_format = format;
+  ss->ss2.width  = (s & 0x7F);        /* bits 6:0 of length */
+  ss->ss2.height = (s >> 7) & 0x3FFF; /* bits 20:7 of length */
+  ss->ss3.depth  = (s >> 21) & 0x3FF; /* bits 30:21 of length */
+  ss->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
+
+  /* Emit relocation for buffer */
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    I915_GEM_DOMAIN_RENDER,
+                    internal_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    index * sizeof(surface_heap_t) +
+                    offsetof(gen7_surface_state_t, ss1),
+                    buf);
+}
+
+static void
+intel_gpgpu_bind_image_gen6(intel_gpgpu_t *gpgpu,
+                            uint32_t index,
+                            dri_bo* obj_bo,
+                            uint32_t obj_bo_offset,
+                            uint32_t format,
+                            cl_mem_object_type type,
+                            int32_t w,
+                            int32_t h,
+                            int32_t depth,
+                            int32_t pitch,
+                            int32_t slice_pitch,
+                            cl_mem_tiling tiling)
+{
+  /* Gen6 image binding - similar to Gen7 but with Gen6 constraints
+   * Gen6 has more limited image support than Gen7 */
+  surface_heap_t *heap = gpgpu->aux_buf.bo->virtual +
+                         gpgpu->aux_offset.surface_heap_offset;
+  gen7_surface_state_t *ss = (gen7_surface_state_t *) heap->surface[index];
+  uint32_t intel_h = h;
+  uint32_t intel_w = w;
+  int32_t surface_type = intel_get_surface_type(type);
+
+  memset(ss, 0, sizeof(*ss));
+
+  ss->ss0.surface_type = surface_type;
+  ss->ss0.surface_format = format;
+
+  /* Gen6 tiling support - linear or tiled */
+  if (tiling == CL_TILE_X) {
+    ss->ss0.tiled_surface = 1;
+    ss->ss0.tile_walk = I965_TILEWALK_XMAJOR;
+  } else if (tiling == CL_TILE_Y) {
+    ss->ss0.tiled_surface = 1;
+    ss->ss0.tile_walk = I965_TILEWALK_YMAJOR;
+  }
+
+  /* Adjust dimensions based on surface type */
+  if (surface_type == I965_SURFACE_2D && tiling != CL_NO_TILE) {
+    intel_h = (intel_h + 3) / 4;
+  }
+
+  /* Set dimensions */
+  ss->ss2.width  = intel_w - 1;
+  ss->ss2.height = intel_h - 1;
+  ss->ss3.depth  = depth - 1;
+  ss->ss3.pitch  = pitch - 1;
+
+  /* Gen6 cache control */
+  ss->ss5.cache_control = cl_gpgpu_get_cache_ctrl();
+
+  /* Surface offset and relocation */
+  dri_bo_emit_reloc(gpgpu->aux_buf.bo,
+                    I915_GEM_DOMAIN_RENDER,
+                    (type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
+                     type == CL_MEM_OBJECT_IMAGE2D) ? I915_GEM_DOMAIN_RENDER : 0,
+                    obj_bo_offset,
+                    gpgpu->aux_offset.surface_heap_offset +
+                    index * sizeof(surface_heap_t) +
+                    offsetof(gen7_surface_state_t, ss1),
+                    obj_bo);
+
+  assert(index < GEN_MAX_SURFACES);
+}
+
+static void
+intel_gpgpu_pipe_control_gen6(intel_gpgpu_t *gpgpu)
+{
+  /* Gen6 PIPE_CONTROL - ensures GPU pipeline synchronization
+   * Gen6 uses same structure as Gen7 (gen6_pipe_control_t) */
+  gen6_pipe_control_t* pc = (gen6_pipe_control_t*)
+    intel_batchbuffer_alloc_space(gpgpu->batch, sizeof(gen6_pipe_control_t));
+  memset(pc, 0, sizeof(*pc));
+  pc->dw0.length = SIZEOF32(gen6_pipe_control_t) - 2;
+  pc->dw0.opcode = CMD(3, 2, 0);
+  pc->dw1.dc_flush_enable = 1;
+  pc->dw1.render_target_cache_flush_enable = 1;
+  pc->dw1.cs_stall = 1;
+  /* Gen6 has similar cache flush requirements as Gen7 */
+  ADVANCE_BATCH(gpgpu->batch);
+}
+
+/* ========================================================================
+ * Gen7 (Ivy Bridge) GPU Functions
+ * ======================================================================== */
+
 static void
 intel_gpgpu_select_pipeline_gen7(intel_gpgpu_t *gpgpu)
 {
@@ -2687,5 +2913,28 @@ intel_set_gpgpu_callbacks(int device_id)
     intel_gpgpu_post_action = intel_gpgpu_post_action_gen7;
     intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen7;
     intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen7;
+  }
+  else if (IS_GEN6(device_id)) {
+    /* Gen6 (Sandy Bridge) - use Gen6-specific implementations */
+    cl_gpgpu_upload_curbes = (cl_gpgpu_upload_curbes_cb *) intel_gpgpu_upload_curbes_gen7; /* Gen7 CURBE works */
+    intel_gpgpu_set_base_address = intel_gpgpu_set_base_address_gen6;
+    intel_gpgpu_load_vfe_state = intel_gpgpu_load_vfe_state_gen6;
+    cl_gpgpu_walker = (cl_gpgpu_walker_cb *)intel_gpgpu_walker_gen7; /* Gen7 walker works */
+    intel_gpgpu_build_idrt = intel_gpgpu_build_idrt_gen7; /* Gen7 IDRT works (uses gen6_interface_descriptor) */
+    intel_gpgpu_load_curbe_buffer = intel_gpgpu_load_curbe_buffer_gen7; /* Gen7 works */
+    intel_gpgpu_load_idrt = intel_gpgpu_load_idrt_gen7; /* Gen7 works */
+    intel_gpgpu_select_pipeline = intel_gpgpu_select_pipeline_gen6;
+
+    /* Gen6-specific functions */
+    cl_gpgpu_bind_image = (cl_gpgpu_bind_image_cb *) intel_gpgpu_bind_image_gen6;
+    cl_gpgpu_get_cache_ctrl = (cl_gpgpu_get_cache_ctrl_cb *)intel_gpgpu_get_cache_ctrl_gen6;
+    intel_gpgpu_get_scratch_index = intel_gpgpu_get_scratch_index_gen6;
+    intel_gpgpu_setup_bti = intel_gpgpu_setup_bti_gen6;
+    intel_gpgpu_pipe_control = intel_gpgpu_pipe_control_gen6;
+
+    /* Gen6 doesn't have L3 config in same way - use Gen7 or stub */
+    intel_gpgpu_set_L3 = intel_gpgpu_set_L3_gen7; /* May need Gen6-specific version */
+    intel_gpgpu_read_ts_reg = intel_gpgpu_read_ts_reg_gen7; /* Gen7 timestamp works */
+    intel_gpgpu_post_action = intel_gpgpu_post_action_gen7; /* Gen7 post action works */
   }
 }

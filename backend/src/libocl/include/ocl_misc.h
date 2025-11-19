@@ -303,6 +303,10 @@ struct time_stamp {
 //Default SIC result initialization:
 #define CLK_AVC_SIC_RESULT_INITIALIZE_INTEL  {0x0}
 
+/* LLVM 18+ pre-defines these as opaque types for cl_intel_motion_estimation
+ * Only define our struct versions for older LLVM versions */
+#if !defined(__clang_major__) || __clang_major__ < 18
+
 typedef struct{
   ushort2 srcCoord;
   short2 ref_offset;
@@ -320,7 +324,41 @@ typedef struct{
 
 typedef uint8 intel_sub_group_avc_ime_result_t;
 
+#else
+/* LLVM 18+: Compiler provides opaque types, define internal struct for implementation */
+typedef struct{
+  ushort2 srcCoord;
+  short2 ref_offset;
+  uchar partition_mask;
+  uchar sad_adjustment;
+  uchar search_window_config;
+  ulong cc0;
+  ulong cc1;
+  ulong cc2;
+  ulong cc3;
+  uint2 packed_cost_table;
+  uchar cost_precision;
+  ulong packed_shape_cost;
+}__beignet_intel_sub_group_avc_ime_payload_internal;
+
+/* Use compiler-provided opaque type, cast to internal for implementation */
+#define BEIGNET_AVC_IME_PAYLOAD_INTERNAL(p) ((__beignet_intel_sub_group_avc_ime_payload_internal*)&(p))
+#endif
+
+/* Accessor macros for payload field access (works with both LLVM <18 and 18+) */
+#if defined(__clang_major__) && __clang_major__ >= 18
+#define AVC_IME_FIELD(payload, field) (BEIGNET_AVC_IME_PAYLOAD_INTERNAL(payload)->field)
+/* Result type accessor - LLVM 18+ makes result types opaque */
+#define AVC_IME_RESULT_VEC(result) (*((uint8*)&(result)))
+#else
+#define AVC_IME_FIELD(payload, field) ((payload).field)
+/* Result types are already uint8 in LLVM <18 */
+#define AVC_IME_RESULT_VEC(result) (result)
+#endif
+
 #define REF_ENABLE_COST_PENALTY 1
+
+#if !defined(__clang_major__) || __clang_major__ < 18
 
 typedef struct{
   ushort2 srcCoord;
@@ -330,7 +368,7 @@ typedef struct{
   uchar directions;
   uchar pixel_mode;
   uchar sad_adjustment;
-#if REF_ENABLE_COST_PENALTY 
+#if REF_ENABLE_COST_PENALTY
   ulong cc0;
   ulong cc1;
   ulong cc2;
@@ -369,6 +407,78 @@ typedef struct{
 typedef uint8 intel_sub_group_avc_ref_result_t;
 
 typedef uint8 intel_sub_group_avc_sic_result_t;
+
+#else
+/* LLVM 18+: Compiler provides opaque types, define internal structs for implementation */
+typedef struct{
+  ushort2 srcCoord;
+  long mv;
+  uchar major_shape;
+  uchar minor_shapes;
+  uchar directions;
+  uchar pixel_mode;
+  uchar sad_adjustment;
+#if REF_ENABLE_COST_PENALTY
+  ulong cc0;
+  ulong cc1;
+  ulong cc2;
+  ulong cc3;
+  uint2 packed_cost_table;
+  uchar cost_precision;
+  ulong packed_shape_cost;
+#endif
+}__beignet_intel_sub_group_avc_ref_payload_internal;
+
+typedef struct{
+  ushort2 srcCoord;
+  uint skip_block_partition_type;
+  uint skip_motion_vector_mask;
+  char bidirectional_weight;
+  uchar skip_sad_adjustment;
+  long mv;
+
+  uchar luma_intra_partition_mask;
+  uchar intra_neighbour_availabilty;
+  uint l_0_3;
+  uint l_4_7;
+  uint l_8_11;
+  uint l_12_15;
+  uint u_0_3;
+  uint u_4_7;
+  uint u_8_11;
+  uint u_12_15;
+  uint ur_16_19;
+  uint ur_20_23;
+  uchar upper_left_corner_luma_pixel;
+  uchar intra_sad_adjustment;
+  uint intra_shape_cost;
+}__beignet_intel_sub_group_avc_sic_payload_internal;
+
+/* Use compiler-provided opaque types, cast to internal for implementation */
+#define BEIGNET_AVC_REF_PAYLOAD_INTERNAL(p) ((__beignet_intel_sub_group_avc_ref_payload_internal*)&(p))
+#define BEIGNET_AVC_SIC_PAYLOAD_INTERNAL(p) ((__beignet_intel_sub_group_avc_sic_payload_internal*)&(p))
+#endif
+
+/* Accessor macros for payload field access (works with both LLVM <18 and 18+) */
+#if defined(__clang_major__) && __clang_major__ >= 18
+#define AVC_REF_FIELD(payload, field) (BEIGNET_AVC_REF_PAYLOAD_INTERNAL(payload)->field)
+#define AVC_SIC_FIELD(payload, field) (BEIGNET_AVC_SIC_PAYLOAD_INTERNAL(payload)->field)
+/* Result type accessors - LLVM 18+ makes result types opaque */
+#define AVC_REF_RESULT_VEC(result) (*((uint8*)&(result)))
+#define AVC_SIC_RESULT_VEC(result) (*((uint8*)&(result)))
+/* Type conversion for opaque result types - cast through uint8 */
+#define AVC_IME_TO_REF_RESULT(ime_res) (*((intel_sub_group_avc_ref_result_t*)&(ime_res)))
+#define AVC_IME_TO_SIC_RESULT(ime_res) (*((intel_sub_group_avc_sic_result_t*)&(ime_res)))
+#else
+#define AVC_REF_FIELD(payload, field) ((payload).field)
+#define AVC_SIC_FIELD(payload, field) ((payload).field)
+/* Result types are already uint8 in LLVM <18 */
+#define AVC_REF_RESULT_VEC(result) (result)
+#define AVC_SIC_RESULT_VEC(result) (result)
+/* No conversion needed in LLVM <18, all are uint8 */
+#define AVC_IME_TO_REF_RESULT(ime_res) (ime_res)
+#define AVC_IME_TO_SIC_RESULT(ime_res) (ime_res)
+#endif
 
 uint __gen_ocl_region(ushort offset, uint data);
 

@@ -70,7 +70,8 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/TargetRegistry.h"
+// LLVM-18 fix: TargetRegistry moved to MC subdirectory
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ToolOutputFile.h"
 
