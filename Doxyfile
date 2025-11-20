@@ -1,0 +1,13 @@
+PROJECT_NAME           = "Beignet"
+INPUT                  = src backend/src include
+OUTPUT_DIRECTORY       = doxygen_output
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+DOT_IMAGE_FORMAT       = png
+GENERATE_LATEX         = NO

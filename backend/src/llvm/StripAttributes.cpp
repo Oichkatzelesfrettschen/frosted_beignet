@@ -70,6 +70,7 @@
 //
 
 #include "llvm_includes.hpp"
+#include "llvm/IR/Attributes.h" // Added for Attribute, AttrBuilder, AttributeList
 
 #include "llvm_gen_backend.hpp"
 
@@ -92,10 +93,28 @@ namespace {
 char StripAttributes::ID = 0;
 
 bool StripAttributes::runOnFunction(Function &Func) {
-  Func.setCallingConv(CallingConv::C);
+  LLVMContext &Ctx = Func.getContext();
+
+  // Set calling convention to C
+  #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50 // AttributeList became preferred around 5.0
+    AttrBuilder Builder(Ctx);
+    Builder.addCallingConv(CallingConv::C);
+    Func.addFnAttrs(Builder);
+  #else
+    Func.setCallingConv(CallingConv::C); // Older way
+  #endif
+
   Func.setLinkage(GlobalValue::ExternalLinkage);
+
   if (!gbe::isKernelFunction(Func)) {
-    Func.addFnAttr(Attribute::AlwaysInline);
+    #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+      AttrBuilder InlineBuilder(Ctx);
+      InlineBuilder.addAttribute(Attribute::AlwaysInline);
+      Func.addFnAttrs(InlineBuilder);
+    #else
+      Func.addFnAttr(Attribute::AlwaysInline); // Older way
+    #endif
+
     if (lastTime ||
         (Func.getName().find("__gen_mem") == std::string::npos))
       // Memcpy and memset functions could be deleted at last inline.
@@ -108,8 +127,15 @@ bool StripAttributes::runOnFunction(Function &Func) {
     for (BasicBlock::iterator Inst = BB->begin(), E = BB->end();
          Inst != E; ++Inst) {
       CallSite Call(&*Inst);
-      if (Call)
-        Call.setCallingConv(CallingConv::C);
+      if (Call.getInstruction()) { // Check if CallSite is valid
+        #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+          AttrBuilder CallConvBuilder(Ctx);
+          CallConvBuilder.addCallingConv(CallingConv::C);
+          Call.setAttributes(Call.getAttributes().addFnAttributes(Ctx, CallConvBuilder));
+        #else
+          Call.setCallingConv(CallingConv::C); // Older way
+        #endif
+      }
     }
   }
 

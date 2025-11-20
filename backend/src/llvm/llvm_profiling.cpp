@@ -34,12 +34,14 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/IRBuilder.h"
 
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/CFG.h"
+// CallSite compatibility is handled via llvm_callsite_compat.hpp
+#if LLVM_VERSION_MAJOR >= 11
+  #include "llvm/llvm_callsite_compat.hpp"
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
+  #include "llvm/IR/CallSite.h"
 #else
-#include "llvm/Support/CallSite.h"
-#include "llvm/Support/CFG.h"
+  #include "llvm/Support/CallSite.h"
 #endif
 
 #include "llvm/Support/raw_ostream.h"
@@ -115,7 +117,12 @@ namespace gbe
 
     module = F.getParent();
     intTy = IntegerType::get(module->getContext(), 32);
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - use PointerType::get with address space
+    ptrTy = PointerType::get(module->getContext(), 1);
+#else
     ptrTy = Type::getInt32PtrTy(module->getContext(), 1);
+#endif
     builder = new IRBuilder<>(module->getContext());
 
     /* alloc a new buffer ptr to collect the timestamps. */
@@ -162,7 +169,14 @@ namespace gbe
       /* Add the timestamp store function call. */
       // __gen_ocl_store_timestamp(int nth, int type);
       Value *Args[2] = {ConstantInt::get(intTy, pointNum++), ConstantInt::get(intTy, profilingType)};
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+#if LLVM_VERSION_MAJOR >= 9
+      // LLVM 9+: getOrInsertFunction returns FunctionCallee
+      builder->CreateCall(module->getOrInsertFunction(
+              "__gen_ocl_calc_timestamp", Type::getVoidTy(module->getContext()),
+              IntegerType::getInt32Ty(module->getContext()),
+              IntegerType::getInt32Ty(module->getContext())),
+              ArrayRef<Value*>(Args));
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
       builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
               "__gen_ocl_calc_timestamp", Type::getVoidTy(module->getContext()),
               IntegerType::getInt32Ty(module->getContext()),
@@ -184,7 +198,14 @@ namespace gbe
     builder->SetInsertPoint(&*retInst);
     Value *Args2[2] = {profilingBuf, ConstantInt::get(intTy, profilingType)};
 
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
+#if LLVM_VERSION_MAJOR >= 9
+    // LLVM 9+: getOrInsertFunction returns FunctionCallee
+    builder->CreateCall(module->getOrInsertFunction(
+            "__gen_ocl_store_profiling", Type::getVoidTy(module->getContext()),
+            ptrTy,
+            IntegerType::getInt32Ty(module->getContext())),
+            ArrayRef<Value*>(Args2));
+#elif LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 50
     builder->CreateCall(cast<llvm::Function>(module->getOrInsertFunction(
             "__gen_ocl_store_profiling", Type::getVoidTy(module->getContext()),
             ptrTy,

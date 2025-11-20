@@ -90,6 +90,7 @@
 #include "llvm_includes.hpp"
 
 #include "llvm_gen_backend.hpp"
+#include "llvm/Support/Alignment.h" // Added for llvm::Align
 
 using namespace llvm;
 
@@ -183,7 +184,13 @@ static ValuePair expandConstant(Constant *C) {
 
 template <typename T>
 static AlignPair getAlign(const DataLayout &DL, T *I, Type *PrefAlignTy) {
+#if LLVM_VERSION_MAJOR >= 11
+  // LLVM 11+: Use getAlign().value() for alignment
+  unsigned LoAlign = I->getAlign().value();
+#else
+  // LLVM <11: Use deprecated getAlignment()
   unsigned LoAlign = I->getAlignment();
+#endif
   if (LoAlign == 0)
     LoAlign = DL.getPrefTypeAlignment(PrefAlignTy);
   unsigned HiAlign = MinAlign(LoAlign, kChunkBytes);
@@ -263,11 +270,18 @@ public:
   }
 
   void eraseReplacedInstructions() {
-    for (Instruction *I : ToErase)
-      I->dropAllReferences();
+    for (Instruction *I : ToErase) {
+      // Ensure all uses are handled if not already replaced by a new instruction.
+      // If I was the 'From' in recordConverted(From, To), its uses are already updated.
+      // If I was an intermediate instruction that's now dead, nullify uses.
+      if (!I->use_empty()) {
+        I->replaceAllUsesWith(UndefValue::get(I->getType()));
+      }
+    }
 
-    for (Instruction *I : ToErase)
+    for (Instruction *I : ToErase) {
       I->eraseFromParent();
+    }
   }
 
   void addEraseCandidate(Instruction *c) {
@@ -475,7 +489,7 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
       VectorType *VecTy = cast<VectorType>(Operand->getType());
       Type *LargeTy = Inst->getType();
       Type *ElemTy = VecTy->getElementType();
-      unsigned ElemNo = VecTy->getNumElements();
+      unsigned ElemNo = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
       Value * VectorRoot = NULL;
       unsigned ChildIndex = 0;
 
@@ -692,13 +706,13 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
     Value *Loty = IRB.CreateBitCast(Op, Tys.Lo->getPointerTo(AddrSpace),
                                     Twine(Op->getName(), ".loty"));
     Value *Lo =
-        IRB.CreateAlignedLoad(Loty, Align.Lo, Twine(Load->getName(), ".lo"));
+        IRB.CreateAlignedLoad(Tys.Lo, Loty, llvm::Align(Align.Lo), false, Twine(Load->getName(), ".lo"));
     Value *HiAddr =
         IRB.CreateConstGEP1_32(Loty, 1, Twine(Op->getName(), ".hi.gep"));
     Value *HiTy = IRB.CreateBitCast(HiAddr, Tys.Hi->getPointerTo(AddrSpace),
                                     Twine(Op->getName(), ".hity"));
     Value *Hi =
-        IRB.CreateAlignedLoad(HiTy, Align.Hi, Twine(Load->getName(), ".hi"));
+        IRB.CreateAlignedLoad(Tys.Hi, HiTy, llvm::Align(Align.Hi), false, Twine(Load->getName(), ".hi"));
     State.recordConverted(Load, ValuePair(Lo, Hi));
 
   } else if (StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
@@ -709,12 +723,12 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
     AlignPair Align = getAlign(DL, Store, Store->getValueOperand()->getType());
     Value *Loty = IRB.CreateBitCast(Ptr, Tys.Lo->getPointerTo(AddrSpace),
                                     Twine(Ptr->getName(), ".loty"));
-    Value *Lo = IRB.CreateAlignedStore(StoreVals.Lo, Loty, Align.Lo);
+    Value *Lo = IRB.CreateAlignedStore(StoreVals.Lo, Loty, llvm::Align(Align.Lo));
     Value *HiAddr =
         IRB.CreateConstGEP1_32(Loty, 1, Twine(Ptr->getName(), ".hi.gep"));
     Value *HiTy = IRB.CreateBitCast(HiAddr, Tys.Hi->getPointerTo(AddrSpace),
                                     Twine(Ptr->getName(), ".hity"));
-    Value *Hi = IRB.CreateAlignedStore(StoreVals.Hi, HiTy, Align.Hi);
+    Value *Hi = IRB.CreateAlignedStore(StoreVals.Hi, HiTy, llvm::Align(Align.Hi));
     State.recordConverted(Store, ValuePair(Lo, Hi));
 
   } else if (ICmpInst *Icmp = dyn_cast<ICmpInst>(Inst)) {

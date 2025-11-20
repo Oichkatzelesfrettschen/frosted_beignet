@@ -34,6 +34,15 @@
 #include <iostream>
 #include <iomanip>
 
+// Phase 5A: High-performance data structures
+#include "backend/gen_reg_allocation_map.hpp"      // O(1) register mapping
+#include "backend/gen_reg_allocation_intervals.hpp" // Index-based intervals
+
+// Phase 5A: Enable optimizations (can be disabled via CMake)
+#ifndef USE_PHASE5A_OPTIMIZATIONS
+#define USE_PHASE5A_OPTIMIZATIONS 1
+#endif
+
 
 #define HALF_REGISTER_FILE_OFFSET (32*64)
 namespace gbe
@@ -44,20 +53,8 @@ namespace gbe
 
   /*! Provides the location of a register in a vector */
   typedef std::pair<SelectionVector*, uint32_t> VectorLocation;
-  /*! Interval as used in linear scan allocator. Basically, stores the first and
-   *  the last instruction where the register is alive
-   */
-  struct GenRegInterval {
-    INLINE GenRegInterval(ir::Register reg) :
-      reg(reg), minID(INT_MAX), maxID(-INT_MAX), accessCount(0),
-      blockID(-1), conflictReg(0), b3OpAlign(0), usedHole(false), isHole(false){}
-    ir::Register reg;     //!< (virtual) register of the interval
-    int32_t minID, maxID; //!< Starting and ending points
-    int32_t accessCount;
-    int32_t blockID; //!< blockID for in-block regs that can reuse hole
-    ir::Register conflictReg; // < has banck conflict with this register
-    bool b3OpAlign, usedHole, isHole;
-  };
+  // Phase 5A: GenRegInterval now defined in backend/gen_reg_interval.hpp
+  // (included via gen_reg_allocation_intervals.hpp)
 
   struct SpillInterval {
     SpillInterval(const ir::Register r, float c):
@@ -80,7 +77,21 @@ namespace gbe
     /*! Return the Gen register from the selection register */
     GenRegister genReg(const GenRegister &reg);
     INLINE bool isAllocated(const ir::Register &reg) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) check
+      bool result = registerMap_.contains(reg);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        bool oldResult = RA.contains(reg);
+        GBE_ASSERT(result == oldResult);
+      }
+
+      return result;
+#else
+      // OLD: std::map - O(log n) check
       return RA.contains(reg);
+#endif
     }
     /*! Output the register allocation */
     void outputAllocation(void);
@@ -143,6 +154,15 @@ namespace gbe
     map<uint32_t, ir::Register> offsetReg;
     /*! Provides the position of each register in a vector */
     map<ir::Register, VectorLocation> vectorMap;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    /*! Phase 5A: High-performance register mapping (replaces RA) */
+    RegisterMap registerMap_;
+    /*! Phase 5A: Index-based interval storage (replaces starting/ending pointers) */
+    IntervalStore intervalStore_;
+    /*! Phase 5A: Enable parallel validation during integration */
+    bool phase5aValidationMode_ = true;
+#endif
     /*! All vectors used in the selection */
     vector<SelectionVector*> vectors;
     /*! The set of booleans that will go to GRF (cannot be kept into flags) */
@@ -208,8 +228,28 @@ namespace gbe
   };
 
 
-  GenRegAllocator::Opaque::Opaque(GenContext &ctx) : ctx(ctx) {}
-  GenRegAllocator::Opaque::~Opaque(void) {}
+  GenRegAllocator::Opaque::Opaque(GenContext &ctx) : ctx(ctx) {
+#if USE_PHASE5A_OPTIMIZATIONS
+    // Phase 5A: Initialize high-performance data structures
+    registerMap_.reserve(1024);  // Hint: typical kernel has ~1000 registers
+    registerMap_.enableReverseMap();  // For offsetReg compatibility
+    intervalStore_.reserve(1024);  // Reserve space for interval storage
+    std::cout << "[Phase 5A] Optimizations enabled (validation mode: "
+              << (phase5aValidationMode_ ? "ON" : "OFF") << ")\n";
+#endif
+  }
+
+  GenRegAllocator::Opaque::~Opaque(void) {
+#if USE_PHASE5A_OPTIMIZATIONS
+    if (phase5aValidationMode_) {
+      std::cout << "[Phase 5A] Final stats:\n"
+                << "  RegisterMap: " << registerMap_.size() << " entries, "
+                << registerMap_.memoryUsage() / 1024 << " KB\n"
+                << "  IntervalStore: " << intervalStore_.size() << " intervals, "
+                << intervalStore_.memoryUsage() / 1024 << " KB\n";
+    }
+#endif
+  }
 
   void GenRegAllocator::Opaque::allocatePayloadReg(ir::Register reg,
                                                    uint32_t offset,
@@ -218,7 +258,20 @@ namespace gbe
     using namespace ir;
     assert(offset >= GEN_REG_SIZE);
     offset += subOffset;
+
+    // OLD: Keep for parallel validation
     RA.insert(std::make_pair(reg, offset));
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A RegisterMap - O(1) insertion
+    registerMap_.insert(reg, offset);
+
+    // VALIDATION: Ensure both methods agree
+    if (phase5aValidationMode_) {
+      GBE_ASSERT(registerMap_.get(reg) == offset);
+      GBE_ASSERT(registerMap_.contains(reg) == RA.contains(reg));
+    }
+#endif
     //GBE_ASSERT(reg != ocl::blockip || (offset % GEN_REG_SIZE == 0));
     //this->intervals[reg].minID = 0;
     //this->intervals[reg].maxID = 0;
@@ -269,13 +322,41 @@ namespace gbe
 
   void GenRegAllocator::Opaque::allocateCurbePayload(void) {
     vector <GenRegInterval *> payloadInterval;
-    for (auto interval : starting) {
-      if (!ctx.isPayloadReg(interval->reg))
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A - iterate via IntervalStore
+    for (size_t i = 0; i < intervalStore_.size(); ++i) {
+      const GenRegInterval &interval = intervalStore_.byStart(i);
+      if (!ctx.isPayloadReg(interval.reg))
         continue;
-      if (interval->minID > 0)
+      if (interval.minID > 0)
         break;
-      payloadInterval.push_back(interval);
+
+      // For sorting, we still use pointers to intervals (temporary)
+      // This will be optimized further in Phase 5B
+      payloadInterval.push_back(&intervals[interval.reg.value()]);
     }
+
+    // VALIDATION: Keep old code in parallel
+    if (phase5aValidationMode_) {
+      vector<GenRegInterval *> oldPayloadInterval;
+#endif
+      for (auto interval : starting) {
+        if (!ctx.isPayloadReg(interval->reg))
+          continue;
+        if (interval->minID > 0)
+          break;
+#if USE_PHASE5A_OPTIMIZATIONS
+        oldPayloadInterval.push_back(interval);
+      }
+      // Validate that we got the same intervals
+      GBE_ASSERT(payloadInterval.size() == oldPayloadInterval.size());
+    }
+#else
+        payloadInterval.push_back(interval);
+      }
+#endif
+
     std::sort(payloadInterval.begin(), payloadInterval.end(), cmp<false>);
     for(auto interval : payloadInterval) {
       if (interval->maxID < 0)
@@ -332,6 +413,28 @@ namespace gbe
           auto holereg = holeregbest->reg;
           holeregbest->startID = useID + 1;
           int32_t grfOffset = -1;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+          // NEW: Phase 5A RegisterMap - O(1) lookup and insertion
+          if (registerMap_.contains(holereg)) {
+            grfOffset = registerMap_.get(holereg);
+            registerMap_.insert(reg, grfOffset);
+
+            // VALIDATION: Ensure matches old method
+            if (phase5aValidationMode_) {
+              GBE_ASSERT(RA.contains(holereg));
+              GBE_ASSERT(grfOffset == RA.find(holereg)->second);
+              GBE_ASSERT(registerMap_.get(reg) == grfOffset);
+            }
+
+            // OLD: Keep for parallel validation
+            RA.insert(std::make_pair(reg, grfOffset));
+
+            interval.usedHole= true;
+            intervals[holereg].usedHole = true;
+          }
+#else
+          // OLD: std::map - O(log n) lookup and insertion
           if (RA.contains(holereg)) {
             //uint32_t grfOffset = RA.find(holereg)->second;
             grfOffset = RA.find(holereg)->second;
@@ -339,10 +442,18 @@ namespace gbe
             interval.usedHole= true;
             intervals[holereg].usedHole = true;
           }
+#endif
         }
       }
     }
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A RegisterMap - O(1) check
+    if (registerMap_.contains(reg) == true)
+#else
+    // OLD: std::map - O(log n) check
     if (RA.contains(reg) == true)
+#endif
       return true; // already allocated
     uint32_t grfOffset = allocateReg(interval, regSize, regSize);
     if (grfOffset == 0) {
@@ -444,12 +555,36 @@ namespace gbe
 
   bool GenRegAllocator::Opaque::expireGRF(const GenRegInterval &limit) {
     bool ret = false;
-    while (this->expiringID != ending.size()) {
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A - use IntervalStore size
+    const size_t endingSize = phase5aValidationMode_ ? ending.size() : intervalStore_.size();
+#else
+    const size_t endingSize = ending.size();
+#endif
+
+    while (this->expiringID != endingSize) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore byEnd()
+      const GenRegInterval &toExpire = intervalStore_.byEnd(this->expiringID);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        const GenRegInterval *oldToExpire = this->ending[this->expiringID];
+        GBE_ASSERT(toExpire.reg == oldToExpire->reg);
+        GBE_ASSERT(toExpire.maxID == oldToExpire->maxID);
+      }
+
+      const ir::Register reg = toExpire.reg;
+
+      // Dead code produced by the insn selection -> we skip it
+      if (toExpire.minID > toExpire.maxID) {
+#else
       const GenRegInterval *toExpire = this->ending[this->expiringID];
       const ir::Register reg = toExpire->reg;
 
       // Dead code produced by the insn selection -> we skip it
       if (toExpire->minID > toExpire->maxID) {
+#endif
         this->expiringID++;
         continue;
       }
@@ -460,12 +595,21 @@ namespace gbe
         continue;
       }
 
+#if USE_PHASE5A_OPTIMIZATIONS
+      if (toExpire.maxID >= limit.minID)
+        break;
+
+      if (expireReg(reg))
+        ret = true;
+      this->expiringID++;
+#else
       if (toExpire->maxID >= limit.minID)
         break;
 
       if (expireReg(reg))
         ret = true;
       this->expiringID++;
+#endif
     }
 
     // We were not able to expire anything
@@ -793,12 +937,32 @@ namespace gbe
     ctx.errCode = REGISTER_ALLOCATION_FAIL;
     const uint32_t regNum = ctx.sel->getRegNum();
     for (uint32_t startID = 0; startID < regNum; ++startID) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore byStart()
+      GenRegInterval &interval = intervalStore_.byStart(startID);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        GenRegInterval *oldInterval = this->starting[startID];
+        GBE_ASSERT(interval.reg == oldInterval->reg);
+        GBE_ASSERT(interval.minID == oldInterval->minID);
+        GBE_ASSERT(interval.maxID == oldInterval->maxID);
+      }
+#else
       GenRegInterval &interval = *this->starting[startID];
+#endif
       const ir::Register reg = interval.reg;
 
       if (interval.maxID == -INT_MAX)
         continue; // Unused register
+
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) check
+      if (registerMap_.contains(reg))
+#else
+      // OLD: std::map - O(log n) check
       if (RA.contains(reg))
+#endif
         continue; // already allocated
       if (flagBooleans.contains(reg))
         continue;
@@ -872,17 +1036,62 @@ namespace gbe
   INLINE bool GenRegAllocator::Opaque::allocateScratchForSpilled()
   {
     const uint32_t regNum = spilledRegs.size();
-    this->starting.resize(regNum);
-    this->ending.resize(regNum);
-    uint32_t regID = 0;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A - create temporary IntervalStore for spilled regs
+    // Note: This is a local allocation, not the global intervalStore_
+    IntervalStore spilledIntervalStore;
+    spilledIntervalStore.reserve(regNum);
+
     for(auto it = spilledRegs.begin(); it != spilledRegs.end(); ++it) {
-      this->starting[regID] = this->ending[regID] = &intervals[it->first];
-      regID++;
+      spilledIntervalStore.add(intervals[it->first]);
     }
-    std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
-    std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+    spilledIntervalStore.sortByStart();
+    spilledIntervalStore.sortByEnd();
+
+    // VALIDATION: Keep old code in parallel
+    if (phase5aValidationMode_) {
+#endif
+      this->starting.resize(regNum);
+      this->ending.resize(regNum);
+      uint32_t regID = 0;
+      for(auto it = spilledRegs.begin(); it != spilledRegs.end(); ++it) {
+        this->starting[regID] = this->ending[regID] = &intervals[it->first];
+        regID++;
+      }
+      std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
+      std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+#if USE_PHASE5A_OPTIMIZATIONS
+    }
+#endif
+
     int toExpire = 0;
     for(uint32_t i = 0; i < regNum; i++) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore
+      const GenRegInterval &cur = spilledIntervalStore.byStart(i);
+      const GenRegInterval &exp = spilledIntervalStore.byEnd(toExpire);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        const GenRegInterval *oldCur = starting[i];
+        const GenRegInterval *oldExp = ending[toExpire];
+        GBE_ASSERT(cur.reg == oldCur->reg);
+        GBE_ASSERT(exp.reg == oldExp->reg);
+      }
+
+      if (exp.maxID < cur.minID) {
+        auto it = spilledRegs.find(exp.reg);
+        GBE_ASSERT(it != spilledRegs.end());
+        if(it->second.addr != -1) {
+          ctx.deallocateScratchMem(it->second.addr);
+        }
+        toExpire++;
+      }
+      auto it = spilledRegs.find(cur.reg);
+      GBE_ASSERT(it != spilledRegs.end());
+      if(cur.minID == cur.maxID) {
+#else
       const GenRegInterval * cur = starting[i];
       const GenRegInterval * exp = ending[toExpire];
       if (exp->maxID < cur->minID) {
@@ -896,6 +1105,7 @@ namespace gbe
       auto it = spilledRegs.find(cur->reg);
       GBE_ASSERT(it != spilledRegs.end());
       if(cur->minID == cur->maxID) {
+#endif
         it->second.addr = -1;
         continue;
       }
@@ -913,20 +1123,38 @@ namespace gbe
   {
     if (this->intervals[reg].usedHole && !this->intervals[reg].isHole)
       return true;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A RegisterMap - O(1) lookup
+    if (flagBooleans.contains(reg))
+      return false;
+    GBE_ASSERT(registerMap_.contains(reg));
+    const uint32_t offset = registerMap_.get(reg);
+
+    // VALIDATION: Ensure matches old method
+    if (phase5aValidationMode_) {
+      auto it = RA.find(reg);
+      GBE_ASSERT(it != RA.end());
+      GBE_ASSERT(it->second == offset);
+    }
+#else
+    // OLD: std::map - O(log n) lookup
     auto it = RA.find(reg);
     if (flagBooleans.contains(reg))
       return false;
     GBE_ASSERT(it != RA.end());
+    const uint32_t offset = it->second;
+#endif
     // offset less than 32 means it is not managed by our reg allocator.
-    if (it->second < 32)
+    if (offset < 32)
       return false;
 
-    ctx.deallocate(it->second);
+    ctx.deallocate(offset);
     if (reservedReg != 0
         && (spillCandidate.find(&intervals[reg]) != spillCandidate.end())) {
         spillCandidate.erase(&intervals[reg]);
         /* offset --> reg map should keep updated. */
-        offsetReg.erase(it->second);
+        offsetReg.erase(offset);
     }
 
     return true;
@@ -939,7 +1167,19 @@ namespace gbe
                                                     uint32_t grfOffset,
                                                     bool isVector)
   {
+     // OLD: Keep for parallel validation
      RA.insert(std::make_pair(reg, grfOffset));
+
+#if USE_PHASE5A_OPTIMIZATIONS
+     // NEW: Phase 5A RegisterMap - O(1) insertion
+     registerMap_.insert(reg, grfOffset);
+
+     // VALIDATION: Ensure both methods agree
+     if (phase5aValidationMode_) {
+       GBE_ASSERT(registerMap_.get(reg) == grfOffset);
+       GBE_ASSERT(registerMap_.contains(reg) == RA.contains(reg));
+     }
+#endif
 
      if (reservedReg != 0) {
 
@@ -1147,7 +1387,16 @@ namespace gbe
         if (remainSize <= 0)
           break;
 
+#if USE_PHASE5A_OPTIMIZATIONS
+        // NEW: Phase 5A RegisterMap - O(1) lookup
+        uint32_t offset = registerMap_.get(reg);
+        if (phase5aValidationMode_) {
+          GBE_ASSERT(offset == RA.find(reg)->second);
+        }
+#else
+        // OLD: std::map - O(log n) lookup
         uint32_t offset = RA.find(reg)->second;
+#endif
         uint32_t s; getRegAttrib(reg, s);
         nextOffset = offset + s;
 
@@ -1216,11 +1465,26 @@ namespace gbe
     bool direction = true;
     if (interval.conflictReg != 0) {
       // try to allocate conflict registers in top/bottom half.
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) lookup
+      if (registerMap_.contains(interval.conflictReg)) {
+        uint32_t conflictOffset = registerMap_.get(interval.conflictReg);
+        if (phase5aValidationMode_) {
+          GBE_ASSERT(RA.contains(interval.conflictReg));
+          GBE_ASSERT(conflictOffset == RA.find(interval.conflictReg)->second);
+        }
+        if (conflictOffset < HALF_REGISTER_FILE_OFFSET) {
+          direction = false;
+        }
+      }
+#else
+      // OLD: std::map - O(log n) lookup
       if (RA.contains(interval.conflictReg)) {
         if (RA.find(interval.conflictReg)->second < HALF_REGISTER_FILE_OFFSET) {
           direction = false;
         }
       }
+#endif
     }
     if (interval.b3OpAlign != 0) {
       alignment = (alignment + 15) & ~15;
@@ -1511,18 +1775,49 @@ do { \
 
     // Sort both intervals in starting point and ending point increasing orders
     const uint32_t regNum = ctx.sel->getRegNum();
-    this->starting.resize(regNum);
-    this->ending.resize(regNum);
-    for (uint32_t regID = 0; regID < regNum; ++regID)
-      this->starting[regID] = this->ending[regID] = &intervals[regID];
-    std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
-    std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A IntervalStore - populate with all intervals
+    intervalStore_.clear();
+    for (uint32_t regID = 0; regID < regNum; ++regID) {
+      intervalStore_.add(intervals[regID]);
+    }
+    // Sort by start and end points using index-based storage
+    intervalStore_.sortByStart();
+    intervalStore_.sortByEnd();
+
+    // VALIDATION: Keep old code running in parallel
+    if (phase5aValidationMode_) {
+#endif
+      this->starting.resize(regNum);
+      this->ending.resize(regNum);
+      for (uint32_t regID = 0; regID < regNum; ++regID)
+        this->starting[regID] = this->ending[regID] = &intervals[regID];
+      std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
+      std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+#if USE_PHASE5A_OPTIMIZATIONS
+    }
+#endif
 
     // Remove the registers that were not allocated
     this->expiringID = 0;
     while (this->expiringID < regNum) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore
+      const GenRegInterval &interval = intervalStore_.byEnd(this->expiringID);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        const GenRegInterval *oldInterval = ending[this->expiringID];
+        GBE_ASSERT(interval.reg == oldInterval->reg);
+        GBE_ASSERT(interval.maxID == oldInterval->maxID);
+      }
+
+      if (interval.maxID == -INT_MAX)
+#else
       const GenRegInterval *interval = ending[this->expiringID];
       if (interval->maxID == -INT_MAX)
+#endif
         this->expiringID++;
       else
         break;
@@ -1590,8 +1885,24 @@ do { \
       if(reg.physical == 1) {
         return reg;
       }
+
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A RegisterMap - O(1) lookup (hot path!)
+      GBE_ASSERT(registerMap_.contains(reg.reg()));
+      const uint32_t grfOffset = registerMap_.get(reg.reg());
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        GBE_ASSERT(RA.contains(reg.reg()) != false);
+        auto it = RA.find(reg.reg());
+        GBE_ASSERT(it != RA.end());
+        GBE_ASSERT(it->second == grfOffset);
+      }
+#else
+      // OLD: std::map - O(log n) lookup
       GBE_ASSERT(RA.contains(reg.reg()) != false);
       const uint32_t grfOffset = RA.find(reg.reg())->second;
+#endif
       const uint32_t suboffset = reg.subphysical ? reg.nr * GEN_REG_SIZE + reg.subnr : 0;
       const GenRegister dst = setGenReg(reg, grfOffset + suboffset);
       if (reg.quarter != 0)

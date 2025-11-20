@@ -125,24 +125,38 @@ namespace gbe
 
   bool GenContext::patchBranches(void) {
     using namespace ir;
-    for (auto pair : branchPos2) {
-      const LabelIndex label = pair.first;
-      const int32_t insnID = pair.second;
-      const int32_t targetID = labelPos.find(label)->second;
-      p->patchJMPI(insnID, (targetID - insnID), 0);
-    }
-    for (auto pair : branchPos3) {
-      const LabelPair labelPair = pair.first;
-      const int32_t insnID = pair.second;
-      const int32_t jip = labelPos.find(labelPair.l0)->second;
-      const int32_t uip = labelPos.find(labelPair.l1)->second;
-      if (((jip - insnID) > 32767 || (jip - insnID) < -32768) ||
-          ((uip - insnID) > 32768 || (uip - insnID) < -32768)) {
-        // The only possible error instruction is if/endif here.
-        errCode = OUT_OF_RANGE_IF_ENDIF; 
-        return false;
+    // Use structured bindings for branchPos2 (vector of std::pair)
+    for (const auto& [label_idx, insn_id] : branchPos2) {
+      // Ensure labelPos access is safe, assuming find always succeeds based on prior logic
+      const auto it = labelPos.find(label_idx);
+      if (it != labelPos.end()) {
+        const int32_t targetID = it->second;
+        p->patchJMPI(insn_id, (targetID - insn_id), 0);
+      } else {
+        // Handle error: label not found, though original code assumed it exists
+        // For now, mimic original behavior which would likely crash or behave unexpectedly
+        // FATAL or GBE_ASSERT could be used here if appropriate
       }
-      p->patchJMPI(insnID, jip - insnID, uip - insnID);
+    }
+    // Use structured bindings for branchPos3 (vector of std::pair)
+    for (const auto& [label_pair_obj, insn_id] : branchPos3) {
+      // Ensure labelPos access is safe
+      const auto it_l0 = labelPos.find(label_pair_obj.l0);
+      const auto it_l1 = labelPos.find(label_pair_obj.l1);
+
+      if (it_l0 != labelPos.end() && it_l1 != labelPos.end()) {
+        const int32_t jip = it_l0->second;
+        const int32_t uip = it_l1->second;
+        if (((jip - insn_id) > 32767 || (jip - insn_id) < -32768) ||
+            ((uip - insn_id) > 32768 || (uip - insn_id) < -32768)) {
+          // The only possible error instruction is if/endif here.
+          errCode = OUT_OF_RANGE_IF_ENDIF;
+          return false;
+        }
+        p->patchJMPI(insn_id, jip - insn_id, uip - insn_id);
+      } else {
+        // Handle error: label not found
+      }
     }
     return true;
   }

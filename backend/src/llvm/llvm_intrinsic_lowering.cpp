@@ -29,12 +29,12 @@
 using namespace llvm;
 
 namespace gbe {
-    class InstrinsicLowering : public BasicBlockPass
+    class InstrinsicLowering : public FunctionPass
     {
     public:
       static char ID;
       InstrinsicLowering() :
-        BasicBlockPass(ID) {}
+        FunctionPass(ID) {}
 
       void getAnalysisUsage(AnalysisUsage &AU) const {
 
@@ -77,8 +77,14 @@ namespace gbe {
         std::vector<Type *> ParamTys;
         for (Value** I = ArgBegin; I != ArgEnd; ++I)
           ParamTys.push_back((*I)->getType());
+#if LLVM_VERSION_MAJOR >= 9
+        // LLVM 9+: getOrInsertFunction returns FunctionCallee
+        FunctionCallee FCache = M->getOrInsertFunction(NewFn,
+                                        FunctionType::get(RetTy, ParamTys, false));
+#else
         Constant* FCache = M->getOrInsertFunction(NewFn,
                                         FunctionType::get(RetTy, ParamTys, false));
+#endif
 
         IRBuilder<> Builder(CI->getParent(), BasicBlock::iterator(CI));
         SmallVector<Value *, 8> Args(ArgBegin, ArgEnd);
@@ -89,20 +95,23 @@ namespace gbe {
         CI->eraseFromParent();
         return NewCI;
       }
-      virtual bool runOnBasicBlock(BasicBlock &BB)
+      virtual bool runOnFunction(Function &F)
       {
-        bool changedBlock = false;
-        Module *M = BB.getParent()->getParent();
-
+        bool changed = false;
+        Module *M = F.getParent();
         DataLayout TD(M);
-        LLVMContext &Context = BB.getContext();
-        for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
-          Instruction *Inst = &*DI++;
-          CallInst* CI = dyn_cast<CallInst>(Inst);
-          if(CI == NULL)
-            continue;
+        LLVMContext &Context = F.getContext();
 
-          IRBuilder<> Builder(&BB, BasicBlock::iterator(CI));
+        // Iterate over all basic blocks in the function
+        for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
+          BasicBlock &BB = *BI;
+          for (BasicBlock::iterator DI = BB.begin(); DI != BB.end(); ) {
+            Instruction *Inst = &*DI++;
+            CallInst* CI = dyn_cast<CallInst>(Inst);
+            if(CI == NULL)
+              continue;
+
+            IRBuilder<> Builder(&BB, BasicBlock::iterator(CI));
           // only support memcpy and memset
           if (Function *F = CI->getCalledFunction()) {
             const Intrinsic::ID intrinsicID = (Intrinsic::ID) F->getIntrinsicID();
@@ -153,15 +162,17 @@ namespace gbe {
               default:
                 continue;
             }
+            changed = true;
           }
         }
-        return changedBlock;
+        } // end of basic block loop
+        return changed;
       }
     };
 
     char InstrinsicLowering::ID = 0;
 
-    BasicBlockPass *createIntrinsicLoweringPass() {
+    FunctionPass *createIntrinsicLoweringPass() {
       return new InstrinsicLowering();
     }
 } // end namespace

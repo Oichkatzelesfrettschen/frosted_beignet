@@ -47,6 +47,7 @@
 #include "backend/gen_program.h"
 #include "backend/gen_program.hpp"
 #include "backend/gen_context.hpp"
+#include "backend/gen6_context.hpp"
 #include "backend/gen75_context.hpp"
 #include "backend/gen8_context.hpp"
 #include "backend/gen9_context.hpp"
@@ -99,7 +100,9 @@ namespace gbe {
     GenInstruction insn[2];
 
     uint32_t insn_version = 0;
-    if (IS_GEN7(deviceID) || IS_GEN75(deviceID))
+    if (IS_GEN6(deviceID))
+      insn_version = 6;  /* Gen6 has similar format to Gen7 */
+    else if (IS_GEN7(deviceID) || IS_GEN75(deviceID))
       insn_version = 7;
     else if (IS_GEN8(deviceID) || IS_GEN9(deviceID))
       insn_version = 8;
@@ -195,7 +198,9 @@ namespace gbe {
     Kernel *kernel = NULL;
 
     // Stop when compilation is successful
-    if (IS_IVYBRIDGE(deviceID)) {
+    if (IS_GEN6(deviceID)) {
+      ctx = GBE_NEW(Gen6Context, unit, name, deviceID, relaxMath);
+    } else if (IS_IVYBRIDGE(deviceID)) {
       ctx = GBE_NEW(GenContext, unit, name, deviceID, relaxMath);
     } else if (IS_HASWELL(deviceID)) {
       ctx = GBE_NEW(Gen75Context, unit, name, deviceID, relaxMath);
@@ -260,20 +265,22 @@ namespace gbe {
 #define GEN_BINARY_HEADER_LENGTH 8
 
   enum GEN_BINARY_HEADER_INDEX {
-    GBHI_BYT = 0,
-    GBHI_IVB = 1,
-    GBHI_HSW = 2,
-    GBHI_CHV = 3,
-    GBHI_BDW = 4,
-    GBHI_SKL = 5,
-    GBHI_BXT = 6,
-    GBHI_KBL = 7,
-    GBHI_GLK = 8,
+    GBHI_SNB = 0,  /* Gen6 (Sandy Bridge) */
+    GBHI_BYT = 1,
+    GBHI_IVB = 2,
+    GBHI_HSW = 3,
+    GBHI_CHV = 4,
+    GBHI_BDW = 5,
+    GBHI_SKL = 6,
+    GBHI_BXT = 7,
+    GBHI_KBL = 8,
+    GBHI_GLK = 9,
     GBHI_MAX,
   };
 #define GEN_BINARY_VERSION  1
   static const unsigned char gen_binary_header[GBHI_MAX][GEN_BINARY_HEADER_LENGTH]= \
-                                             {{GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'Y', 'T'},
+                                             {{GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'S', 'N', 'B'},
+                                              {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'B', 'Y', 'T'},
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'I', 'V', 'B'},
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'H', 'S', 'W'},
                                               {GEN_BINARY_VERSION, 'G','E', 'N', 'C', 'C', 'H', 'V'},
@@ -285,6 +292,7 @@ namespace gbe {
                                               };
 
 #define FILL_GEN_HEADER(binary, index)  do {int i = 0; do {*(binary+i) = gen_binary_header[index][i]; i++; }while(i < GEN_BINARY_HEADER_LENGTH);}while(0)
+#define FILL_SNB_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_SNB)
 #define FILL_BYT_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_BYT)
 #define FILL_IVB_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_IVB)
 #define FILL_HSW_HEADER(binary) FILL_GEN_HEADER(binary, GBHI_HSW)
@@ -311,6 +319,7 @@ namespace gbe {
     return matched;
   }
 
+#define MATCH_SNB_HEADER(binary) genHeaderCompare(binary, GBHI_SNB)
 #define MATCH_BYT_HEADER(binary) genHeaderCompare(binary, GBHI_BYT)
 #define MATCH_IVB_HEADER(binary) genHeaderCompare(binary, GBHI_IVB)
 #define MATCH_HSW_HEADER(binary) genHeaderCompare(binary, GBHI_HSW)
@@ -321,7 +330,7 @@ namespace gbe {
 #define MATCH_KBL_HEADER(binary) genHeaderCompare(binary, GBHI_KBL)
 #define MATCH_GLK_HEADER(binary) genHeaderCompare(binary, GBHI_GLK)
 
-#define MATCH_DEVICE(deviceID, binary) ((IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
+#define MATCH_DEVICE(deviceID, binary) ((IS_GEN6(deviceID) && MATCH_SNB_HEADER(binary)) ||  \
                                       (IS_IVYBRIDGE(deviceID) && MATCH_IVB_HEADER(binary)) ||  \
                                       (IS_BAYTRAIL_T(deviceID) && MATCH_BYT_HEADER(binary)) ||  \
                                       (IS_HASWELL(deviceID) && MATCH_HSW_HEADER(binary)) ||  \
@@ -422,7 +431,9 @@ namespace gbe {
         return 0;
 
       memset(*binary, 0, sizeof(char) * (sz+GEN_BINARY_HEADER_LENGTH) );
-      if(IS_IVYBRIDGE(prog->deviceID)){
+      if(IS_GEN6(prog->deviceID)){
+        FILL_SNB_HEADER(*binary);
+      }else if(IS_IVYBRIDGE(prog->deviceID)){
         FILL_IVB_HEADER(*binary);
         if(IS_BAYTRAIL_T(prog->deviceID)){
         FILL_BYT_HEADER(*binary);

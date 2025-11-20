@@ -29,12 +29,12 @@
 #include "sys/mutex.hpp"
 
 #if GBE_DEBUG_MEMORY
-#include <tr1/unordered_map>
+#include <unordered_map> // Modernized
 #include <cstring>
 #endif /* GBE_DEBUG_MEMORY */
 
 #if defined(__ICC__)
-#include <stdint.h>
+#include <cstdint> // Modernized
 #endif /* __ICC__ */
 #include <map>
 #include <vector>
@@ -69,7 +69,7 @@ namespace gbe
     /*! Total number of allocations done */
     volatile intptr_t allocNum;
     /*! Sorts the file name and function name strings */
-    std::tr1::unordered_map<const char*, int> staticStringMap;
+    std::unordered_map<const char*, int> staticStringMap; // Modernized
     /*! Each element contains the actual string */
     std::vector<const char*> staticStringVector;
     std::map<uintptr_t, AllocData> allocMap;
@@ -82,23 +82,26 @@ namespace gbe
     if (ptr == NULL) return ptr;
     Lock<MutexSys> lock(mutex);
     const uintptr_t iptr = (uintptr_t) ptr;
-    if (UNLIKELY(allocMap.find(iptr) != allocMap.end())) {
-      this->dumpData(allocMap.find(iptr)->second);
+    if (UNLIKELY(allocMap.count(iptr))) { // Use .count for checking existence in map
+      this->dumpData(allocMap.at(iptr)); // Use .at() or find() then second for access
       FATAL("Pointer already in map");
     }
+    // Using structured binding for map insertion result could be an option too, but find then insert is also fine.
     const auto fileIt = staticStringMap.find(file);
     const auto functionIt = staticStringMap.find(function);
     int fileName, functionName;
     if (fileIt == staticStringMap.end()) {
       staticStringVector.push_back(file);
       staticStringMap[file] = fileName = int(staticStringVector.size()) - 1;
-    } else
-      fileName = staticStringMap[file];
+    } else {
+      fileName = fileIt->second;
+    }
     if (functionIt == staticStringMap.end()) {
       staticStringVector.push_back(function);
       staticStringMap[function] = functionName = int(staticStringVector.size()) - 1;
-    } else
-      functionName = staticStringMap[function];
+    } else {
+      functionName = functionIt->second;
+    }
     allocMap[iptr] = AllocData(fileName, functionName, line, allocNum);
     unfreedNum++;
     allocNum++;
@@ -124,7 +127,11 @@ namespace gbe
 
   void MemDebugger::dumpAlloc(void) {
     std::cerr << "MemDebugger: Unfreed number: " << unfreedNum << std::endl;
-    for (const auto &alloc : allocMap) this->dumpData(alloc.second);
+    // Using structured binding for iterating over the map
+    for (const auto& [ptr_val, alloc_data] : allocMap) {
+        (void)ptr_val; // Explicitly mark ptr_val as unused if not needed in this specific loop body
+        this->dumpData(alloc_data);
+    }
     std::cerr << "MemDebugger: " << staticStringVector.size()
               << " allocated static strings" << std::endl;
   }
