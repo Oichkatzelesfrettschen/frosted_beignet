@@ -35,6 +35,14 @@ namespace gbe {
     if(!type->isPointerTy())
       return NULL;
 
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - check if operand is a Function directly
+    // In opaque pointer mode, we can't query element type from pointer
+    Function *Fn = dyn_cast<Function>(bt->getOperand(0));
+    if(Fn == NULL)
+      return NULL;
+#else
+    // LLVM <15: Typed pointers - check element type
     PointerType *pointerType = dyn_cast<PointerType>(type);
     Type *pointed = pointerType->getElementType();
     if(!pointed->isFunctionTy())
@@ -43,6 +51,7 @@ namespace gbe {
     Function *Fn = dyn_cast<Function>(bt->getOperand(0));
     if(Fn == NULL)
       return NULL;
+#endif
 
     /* This is a fake, to check the function bitcast is for block or not */
     std::string fnName = Fn->getName();
@@ -77,7 +86,13 @@ namespace gbe {
 
       PointerType *ty = dyn_cast<PointerType>(v->getType());
       if(ty == NULL) continue;   //should only one argument, private pointer type
+#if LLVM_VERSION_MAJOR >= 15
+      // LLVM 15+: Opaque pointers - create pointer with address space 1
+      ty = PointerType::get(v->getContext(), 1);
+#else
+      // LLVM <15: Typed pointers - preserve element type
       ty = PointerType::get(ty->getPointerElementType(), 1);
+#endif
       v->mutateType(ty);
       WorkList.pop_front();
     }
@@ -114,8 +129,15 @@ namespace gbe {
     for (Function::arg_iterator I = Fn->arg_begin(), E = Fn->arg_end(); I != E; ++I) {
       PointerType *ty = dyn_cast<PointerType>(I->getType());
       //Foce set the address space to global
-      if(ty && (ty->getAddressSpace() == 0 || ty->getAddressSpace() == 4))
+      if(ty && (ty->getAddressSpace() == 0 || ty->getAddressSpace() == 4)) {
+#if LLVM_VERSION_MAJOR >= 15
+        // LLVM 15+: Opaque pointers - create pointer with address space 1
+        ty = PointerType::get(I->getContext(), 1);
+#else
+        // LLVM <15: Typed pointers - preserve element type
         ty = PointerType::get(ty->getPointerElementType(), 1);
+#endif
+      }
       ParamTys.push_back(ty);
     }
     FunctionType* NewFT = FunctionType::get(Fn->getReturnType(), ParamTys, false);
@@ -398,8 +420,16 @@ namespace gbe {
               std::vector<Type *> ParamTys;
               for (Value** iter = args.begin(); iter != args.end(); ++iter)
                 ParamTys.push_back((*iter)->getType());
+#if LLVM_VERSION_MAJOR >= 9
+              // LLVM 9+: getOrInsertFunction returns FunctionCallee
+              FunctionCallee funcCallee = mod->getOrInsertFunction(
+                              "__gen_enqueue_kernel_slm", FunctionType::get(intTy, ParamTys, false));
+              CallInst* newCI = builder.CreateCall(funcCallee, args);
+#else
+              // LLVM <9: getOrInsertFunction returns Function*
               CallInst* newCI = builder.CreateCall(cast<llvm::Function>(mod->getOrInsertFunction(
                               "__gen_enqueue_kernel_slm", FunctionType::get(intTy, ParamTys, false))), args);
+#endif
               CI->replaceAllUsesWith(newCI);
               deadInsnSet.insert(CI);
             }

@@ -184,7 +184,13 @@ static ValuePair expandConstant(Constant *C) {
 
 template <typename T>
 static AlignPair getAlign(const DataLayout &DL, T *I, Type *PrefAlignTy) {
+#if LLVM_VERSION_MAJOR >= 11
+  // LLVM 11+: Use getAlign().value() for alignment
+  unsigned LoAlign = I->getAlign().value();
+#else
+  // LLVM <11: Use deprecated getAlignment()
   unsigned LoAlign = I->getAlignment();
+#endif
   if (LoAlign == 0)
     LoAlign = DL.getPrefTypeAlignment(PrefAlignTy);
   unsigned HiAlign = MinAlign(LoAlign, kChunkBytes);
@@ -483,7 +489,7 @@ static void convertInstruction(Instruction *Inst, ConversionState &State,
       VectorType *VecTy = cast<VectorType>(Operand->getType());
       Type *LargeTy = Inst->getType();
       Type *ElemTy = VecTy->getElementType();
-      unsigned ElemNo = VecTy->getNumElements();
+      unsigned ElemNo = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
       Value * VectorRoot = NULL;
       unsigned ChildIndex = 0;
 

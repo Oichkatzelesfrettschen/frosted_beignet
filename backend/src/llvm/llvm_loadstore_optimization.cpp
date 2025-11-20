@@ -142,7 +142,13 @@ namespace gbe {
     if (!constOffSCEV) return false;
 
     int64_t offset = constOffSCEV->getValue()->getSExtValue();
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - get element type from the actual value being loaded/stored
+    Type *Ty = getValueType(A);
+#else
+    // LLVM <15: Typed pointers - get element type from pointer
     Type *Ty = cast<PointerType>(ptrA->getType())->getElementType();
+#endif
     // The Instructions are connsecutive if the size of the first load/store is
     // the same as the offset.
     int64_t sz = TD->getTypeStoreSize(Ty);
@@ -165,7 +171,7 @@ namespace gbe {
       values.push_back(merged[i]);
     }
     LoadInst *ld = cast<LoadInst>(first);
-    unsigned align = ld->getAlignment();
+    unsigned align = GBE_GET_ALIGNMENT(*ld);
     unsigned addrSpace = ld->getPointerAddressSpace();
     // insert before first load
     Builder.SetInsertPoint(ld);
@@ -186,7 +192,11 @@ namespace gbe {
     VectorType *vecTy = VectorType::get(ld->getType(), size);
     Value *vecPtr = Builder.CreateBitCast(newPtr, PointerType::get(vecTy, addrSpace));
     LoadInst *vecValue = Builder.CreateLoad(vecPtr);
+#if LLVM_VERSION_MAJOR >= 11
+    vecValue->setAlign(llvm::Align(align));
+#else
     vecValue->setAlignment(align);
+#endif
 
     for (unsigned i = 0; i < size; ++i) {
       Value *S = Builder.CreateExtractElement(vecValue, Builder.getInt32(i));
@@ -358,7 +368,7 @@ namespace gbe {
 
     unsigned addrSpace = st->getPointerAddressSpace();
 
-    unsigned align = st->getAlignment();
+    unsigned align = GBE_GET_ALIGNMENT(*st);
     // insert before the last store
     Builder.SetInsertPoint(last);
 
@@ -387,7 +397,11 @@ namespace gbe {
 
     Value *newPtr = Builder.CreateBitCast(newSPtr, PointerType::get(vecTy, addrSpace));
     StoreInst *newST = Builder.CreateStore(parent, newPtr);
+#if LLVM_VERSION_MAJOR >= 11
+    newST->setAlign(llvm::Align(align));
+#else
     newST->setAlignment(align);
+#endif
   }
 
   // Find the safe iterator (will not be deleted after the merge) we can
