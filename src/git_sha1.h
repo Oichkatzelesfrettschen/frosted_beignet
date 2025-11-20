@@ -1,1 +1,0 @@
-#define BEIGNET_GIT_SHA1 "git-merge-synthesis-169138-694916b"

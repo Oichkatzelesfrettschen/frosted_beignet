@@ -7,3 +7,5 @@ cmake_install.cmake
 build/
 kernels/builtin_*.cl
 __pycache__/
+*.bak
+src/git_sha1.h

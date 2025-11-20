@@ -35,10 +35,18 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-# Robust version regex parsing for modern LLVM (handling double digit major versions)
-string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1\\2" LLVM_VERSION_NODOT ${LLVM_VERSION})
-string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION_NOPATCH ${LLVM_VERSION})
-string(REGEX REPLACE "([0-9]+)\\..*" "\\1" LLVM_MAJOR_VERSION ${LLVM_VERSION})
+# Extract major and minor version numbers
+string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*" "\\1" LLVM_VERSION_MAJOR ${LLVM_VERSION})
+string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*" "\\2" LLVM_VERSION_MINOR ${LLVM_VERSION})
+string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION_NOPATCH ${LLVM_VERSION})
+# Zero-pad minor version to two digits and concatenate
+math(EXPR LLVM_VERSION_MINOR_PADDED "${LLVM_VERSION_MINOR}")
+if(LLVM_VERSION_MINOR LESS 10)
+  set(LLVM_VERSION_NODOT "${LLVM_VERSION_MAJOR}0${LLVM_VERSION_MINOR}")
+else()
+  set(LLVM_VERSION_NODOT "${LLVM_VERSION_MAJOR}${LLVM_VERSION_MINOR}")
+endif()
+set(LLVM_MAJOR_VERSION ${LLVM_VERSION_MAJOR})
 
 message(STATUS "LLVM version: ${LLVM_VERSION} (Major: ${LLVM_MAJOR_VERSION}, NoDot: ${LLVM_VERSION_NODOT})")
 
@@ -185,6 +193,7 @@ set(_CLANG_CPP_SEARCH_PATHS
     ${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_LIBRARY_ARCHITECTURE}
 )
 
+# Search LLVM libdir and common related paths
 find_library(CLANG_CPP_LIB NAMES clang-cpp clang-cpp-${LLVM_VERSION_MAJOR} clang-cpp-${LLVM_VERSION_NOPATCH}
              HINTS ${_CLANG_CPP_SEARCH_PATHS})
 
@@ -215,7 +224,8 @@ execute_process(
   ERROR_QUIET
 )
 if (LLVM_SYSTEM_LIBS)
-  string(REGEX REPLACE "[\n\r]" "" LLVM_SYSTEM_LIBS "${LLVM_SYSTEM_LIBS}")
+  # Remove newlines
+  string(REGEX REPLACE "[\\r\\n]+" "" LLVM_SYSTEM_LIBS "${LLVM_SYSTEM_LIBS}")
   message(STATUS "LLVM System Libraries: ${LLVM_SYSTEM_LIBS}")
   set(LLVM_MODULE_LIBS "${LLVM_MODULE_LIBS} ${LLVM_SYSTEM_LIBS}")
 endif()
