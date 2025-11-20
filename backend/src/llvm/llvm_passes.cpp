@@ -92,15 +92,16 @@ namespace gbe
 
   uint32_t getAlignmentByte(const ir::Unit &unit, Type* Ty)
   {
+    // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately
+    if (Ty->isVectorTy()) {
+      const VectorType* VecTy = cast<VectorType>(Ty);
+      uint32_t elemNum = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
+      if (elemNum == 3) elemNum = 4; // OCL spec
+      return elemNum * getTypeByteSize(unit, VecTy->getElementType());
+    }
+
     switch (Ty->getTypeID()) {
       case Type::VoidTyID: NOT_SUPPORTED;
-      case Type::VectorTyID:
-      {
-        const VectorType* VecTy = cast<VectorType>(Ty);
-        uint32_t elemNum = VecTy->getNumElements();
-        if (elemNum == 3) elemNum = 4; // OCL spec
-        return elemNum * getTypeByteSize(unit, VecTy->getElementType());
-      }
       case Type::PointerTyID:
       case Type::IntegerTyID:
       case Type::FloatTyID:
@@ -126,6 +127,14 @@ namespace gbe
 
   uint32_t getTypeBitSize(const ir::Unit &unit, Type* Ty)
   {
+    // LLVM 11+: Type::VectorTyID removed from TypeID enum, check separately
+    if (Ty->isVectorTy()) {
+      const VectorType* VecTy = cast<VectorType>(Ty);
+      uint32_t numElem = GBE_VECTOR_GET_NUM_ELEMENTS(VecTy);
+      if(numElem == 3) numElem = 4; // OCL spec
+      return numElem * getTypeBitSize(unit, VecTy->getElementType());
+    }
+
     switch (Ty->getTypeID()) {
       case Type::VoidTyID:    NOT_SUPPORTED;
       case Type::PointerTyID: return unit.getPointerSize();
@@ -138,13 +147,6 @@ namespace gbe
       case Type::HalfTyID:    return 16;
       case Type::FloatTyID:   return 32;
       case Type::DoubleTyID:  return 64;
-      case Type::VectorTyID:
-      {
-        const VectorType* VecTy = cast<VectorType>(Ty);
-        uint32_t numElem = VecTy->getNumElements();
-        if(numElem == 3) numElem = 4; // OCL spec
-        return numElem * getTypeBitSize(unit, VecTy->getElementType());
-      }
       case Type::ArrayTyID:
       {
         const ArrayType* ArrTy = cast<ArrayType>(Ty);
@@ -182,12 +184,32 @@ namespace gbe
 
   Type* getEltType(Type* eltTy, uint32_t index) {
     Type *elementType = NULL;
+#if LLVM_VERSION_MAJOR >= 15
+    // LLVM 15+: Opaque pointers - cannot get element type from pointer
+    // For opaque pointers, caller must provide type from context (load/store/GEP)
+    if(isa<PointerType>(eltTy)) {
+      // Return null for opaque pointers - caller must handle
+      return NULL;
+    }
+#else
     if (PointerType* ptrType = dyn_cast<PointerType>(eltTy))
       elementType = ptrType->getElementType();
+#endif
+#if LLVM_VERSION_MAJOR >= 11
+    // LLVM 11+: SequentialType removed, handle ArrayType and VectorType separately
+    else if(ArrayType * arrType = dyn_cast<ArrayType>(eltTy))
+      elementType = arrType->getElementType();
+    else if(VectorType * vecType = dyn_cast<VectorType>(eltTy))
+      elementType = vecType->getElementType();
+    // LLVM 11+: CompositeType removed, handle StructType directly
+    else if(StructType * structTy = dyn_cast<StructType>(eltTy))
+      elementType = structTy->getTypeAtIndex(index);
+#else
     else if(SequentialType * seqType = dyn_cast<SequentialType>(eltTy))
       elementType = seqType->getElementType();
     else if(CompositeType * compTy= dyn_cast<CompositeType>(eltTy))
       elementType = compTy->getTypeAtIndex(index);
+#endif
     GBE_ASSERT(elementType);
     return elementType;
   }
@@ -219,13 +241,13 @@ namespace gbe
     return offset;
   }
 
-  class GenRemoveGEPPasss : public BasicBlockPass
+  class GenRemoveGEPPasss : public FunctionPass
   {
 
    public:
     static char ID;
     GenRemoveGEPPasss(const ir::Unit &unit) :
-      BasicBlockPass(ID),
+      FunctionPass(ID),
       unit(unit) {}
     const ir::Unit &unit;
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -242,26 +264,30 @@ namespace gbe
 
     bool simplifyGEPInstructions(GetElementPtrInst* GEPInst);
 
-    virtual bool runOnBasicBlock(BasicBlock &BB)
+    virtual bool runOnFunction(Function &F)
     {
-      bool changedBlock = false;
-    // Iterate safely, as simplifyGEPInstructions may erase the current instruction
-    for (Instruction &I : BB) {
-      if (GetElementPtrInst* gep = dyn_cast<GetElementPtrInst>(&I)) {
-        // Check if gep is still in a basic block, as it might have been erased by a previous iteration
-        if (gep->getParent()) {
-          if (simplifyGEPInstructions(gep)) {
-            changedBlock = true;
+      bool changed = false;
+      // Iterate over all basic blocks in the function
+      for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
+        BasicBlock &BB = *BI;
+        // Iterate safely, as simplifyGEPInstructions may erase the current instruction
+        for (Instruction &I : BB) {
+          if (GetElementPtrInst* gep = dyn_cast<GetElementPtrInst>(&I)) {
+            // Check if gep is still in a basic block, as it might have been erased by a previous iteration
+            if (gep->getParent()) {
+              if (simplifyGEPInstructions(gep)) {
+                changed = true;
             // After simplification, the GEP is erased, so we don't need to worry about iterator invalidation
             // for this specific instruction. However, the loop structure itself needs to be safe.
             // Re-evaluating BB.getInstList().end() or using a different loop might be needed if further modifications
             // within the loop could alter BB structure significantly beyond erasing 'gep'.
             // For now, assuming simplifyGEPInstructions only erases 'gep' and inserts before it.
+              }
+            }
           }
         }
       }
-      }
-      return changedBlock;
+      return changed;
     }
   };
 
@@ -334,7 +360,7 @@ namespace gbe
     return true;
   }
 
-  BasicBlockPass *createRemoveGEPPass(const ir::Unit &unit) {
+  FunctionPass *createRemoveGEPPass(const ir::Unit &unit) {
     return new GenRemoveGEPPasss(unit);
   }
 } /* namespace gbe */

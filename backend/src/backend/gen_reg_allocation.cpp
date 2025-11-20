@@ -158,6 +158,8 @@ namespace gbe
 #if USE_PHASE5A_OPTIMIZATIONS
     /*! Phase 5A: High-performance register mapping (replaces RA) */
     RegisterMap registerMap_;
+    /*! Phase 5A: Index-based interval storage (replaces starting/ending pointers) */
+    IntervalStore intervalStore_;
     /*! Phase 5A: Enable parallel validation during integration */
     bool phase5aValidationMode_ = true;
 #endif
@@ -231,6 +233,7 @@ namespace gbe
     // Phase 5A: Initialize high-performance data structures
     registerMap_.reserve(1024);  // Hint: typical kernel has ~1000 registers
     registerMap_.enableReverseMap();  // For offsetReg compatibility
+    intervalStore_.reserve(1024);  // Reserve space for interval storage
     std::cout << "[Phase 5A] Optimizations enabled (validation mode: "
               << (phase5aValidationMode_ ? "ON" : "OFF") << ")\n";
 #endif
@@ -239,9 +242,11 @@ namespace gbe
   GenRegAllocator::Opaque::~Opaque(void) {
 #if USE_PHASE5A_OPTIMIZATIONS
     if (phase5aValidationMode_) {
-      std::cout << "[Phase 5A] Final stats - RegisterMap size: "
-                << registerMap_.size() << " entries, memory: "
-                << registerMap_.memoryUsage() / 1024 << " KB\n";
+      std::cout << "[Phase 5A] Final stats:\n"
+                << "  RegisterMap: " << registerMap_.size() << " entries, "
+                << registerMap_.memoryUsage() / 1024 << " KB\n"
+                << "  IntervalStore: " << intervalStore_.size() << " intervals, "
+                << intervalStore_.memoryUsage() / 1024 << " KB\n";
     }
 #endif
   }
@@ -317,13 +322,41 @@ namespace gbe
 
   void GenRegAllocator::Opaque::allocateCurbePayload(void) {
     vector <GenRegInterval *> payloadInterval;
-    for (auto interval : starting) {
-      if (!ctx.isPayloadReg(interval->reg))
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A - iterate via IntervalStore
+    for (size_t i = 0; i < intervalStore_.size(); ++i) {
+      const GenRegInterval &interval = intervalStore_.byStart(i);
+      if (!ctx.isPayloadReg(interval.reg))
         continue;
-      if (interval->minID > 0)
+      if (interval.minID > 0)
         break;
-      payloadInterval.push_back(interval);
+
+      // For sorting, we still use pointers to intervals (temporary)
+      // This will be optimized further in Phase 5B
+      payloadInterval.push_back(&intervals[interval.reg.value()]);
     }
+
+    // VALIDATION: Keep old code in parallel
+    if (phase5aValidationMode_) {
+      vector<GenRegInterval *> oldPayloadInterval;
+#endif
+      for (auto interval : starting) {
+        if (!ctx.isPayloadReg(interval->reg))
+          continue;
+        if (interval->minID > 0)
+          break;
+#if USE_PHASE5A_OPTIMIZATIONS
+        oldPayloadInterval.push_back(interval);
+      }
+      // Validate that we got the same intervals
+      GBE_ASSERT(payloadInterval.size() == oldPayloadInterval.size());
+    }
+#else
+        payloadInterval.push_back(interval);
+      }
+#endif
+
     std::sort(payloadInterval.begin(), payloadInterval.end(), cmp<false>);
     for(auto interval : payloadInterval) {
       if (interval->maxID < 0)
@@ -522,12 +555,36 @@ namespace gbe
 
   bool GenRegAllocator::Opaque::expireGRF(const GenRegInterval &limit) {
     bool ret = false;
-    while (this->expiringID != ending.size()) {
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A - use IntervalStore size
+    const size_t endingSize = phase5aValidationMode_ ? ending.size() : intervalStore_.size();
+#else
+    const size_t endingSize = ending.size();
+#endif
+
+    while (this->expiringID != endingSize) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore byEnd()
+      const GenRegInterval &toExpire = intervalStore_.byEnd(this->expiringID);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        const GenRegInterval *oldToExpire = this->ending[this->expiringID];
+        GBE_ASSERT(toExpire.reg == oldToExpire->reg);
+        GBE_ASSERT(toExpire.maxID == oldToExpire->maxID);
+      }
+
+      const ir::Register reg = toExpire.reg;
+
+      // Dead code produced by the insn selection -> we skip it
+      if (toExpire.minID > toExpire.maxID) {
+#else
       const GenRegInterval *toExpire = this->ending[this->expiringID];
       const ir::Register reg = toExpire->reg;
 
       // Dead code produced by the insn selection -> we skip it
       if (toExpire->minID > toExpire->maxID) {
+#endif
         this->expiringID++;
         continue;
       }
@@ -538,12 +595,21 @@ namespace gbe
         continue;
       }
 
+#if USE_PHASE5A_OPTIMIZATIONS
+      if (toExpire.maxID >= limit.minID)
+        break;
+
+      if (expireReg(reg))
+        ret = true;
+      this->expiringID++;
+#else
       if (toExpire->maxID >= limit.minID)
         break;
 
       if (expireReg(reg))
         ret = true;
       this->expiringID++;
+#endif
     }
 
     // We were not able to expire anything
@@ -871,7 +937,20 @@ namespace gbe
     ctx.errCode = REGISTER_ALLOCATION_FAIL;
     const uint32_t regNum = ctx.sel->getRegNum();
     for (uint32_t startID = 0; startID < regNum; ++startID) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore byStart()
+      GenRegInterval &interval = intervalStore_.byStart(startID);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        GenRegInterval *oldInterval = this->starting[startID];
+        GBE_ASSERT(interval.reg == oldInterval->reg);
+        GBE_ASSERT(interval.minID == oldInterval->minID);
+        GBE_ASSERT(interval.maxID == oldInterval->maxID);
+      }
+#else
       GenRegInterval &interval = *this->starting[startID];
+#endif
       const ir::Register reg = interval.reg;
 
       if (interval.maxID == -INT_MAX)
@@ -957,17 +1036,62 @@ namespace gbe
   INLINE bool GenRegAllocator::Opaque::allocateScratchForSpilled()
   {
     const uint32_t regNum = spilledRegs.size();
-    this->starting.resize(regNum);
-    this->ending.resize(regNum);
-    uint32_t regID = 0;
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A - create temporary IntervalStore for spilled regs
+    // Note: This is a local allocation, not the global intervalStore_
+    IntervalStore spilledIntervalStore;
+    spilledIntervalStore.reserve(regNum);
+
     for(auto it = spilledRegs.begin(); it != spilledRegs.end(); ++it) {
-      this->starting[regID] = this->ending[regID] = &intervals[it->first];
-      regID++;
+      spilledIntervalStore.add(intervals[it->first]);
     }
-    std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
-    std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+    spilledIntervalStore.sortByStart();
+    spilledIntervalStore.sortByEnd();
+
+    // VALIDATION: Keep old code in parallel
+    if (phase5aValidationMode_) {
+#endif
+      this->starting.resize(regNum);
+      this->ending.resize(regNum);
+      uint32_t regID = 0;
+      for(auto it = spilledRegs.begin(); it != spilledRegs.end(); ++it) {
+        this->starting[regID] = this->ending[regID] = &intervals[it->first];
+        regID++;
+      }
+      std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
+      std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+#if USE_PHASE5A_OPTIMIZATIONS
+    }
+#endif
+
     int toExpire = 0;
     for(uint32_t i = 0; i < regNum; i++) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore
+      const GenRegInterval &cur = spilledIntervalStore.byStart(i);
+      const GenRegInterval &exp = spilledIntervalStore.byEnd(toExpire);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        const GenRegInterval *oldCur = starting[i];
+        const GenRegInterval *oldExp = ending[toExpire];
+        GBE_ASSERT(cur.reg == oldCur->reg);
+        GBE_ASSERT(exp.reg == oldExp->reg);
+      }
+
+      if (exp.maxID < cur.minID) {
+        auto it = spilledRegs.find(exp.reg);
+        GBE_ASSERT(it != spilledRegs.end());
+        if(it->second.addr != -1) {
+          ctx.deallocateScratchMem(it->second.addr);
+        }
+        toExpire++;
+      }
+      auto it = spilledRegs.find(cur.reg);
+      GBE_ASSERT(it != spilledRegs.end());
+      if(cur.minID == cur.maxID) {
+#else
       const GenRegInterval * cur = starting[i];
       const GenRegInterval * exp = ending[toExpire];
       if (exp->maxID < cur->minID) {
@@ -981,6 +1105,7 @@ namespace gbe
       auto it = spilledRegs.find(cur->reg);
       GBE_ASSERT(it != spilledRegs.end());
       if(cur->minID == cur->maxID) {
+#endif
         it->second.addr = -1;
         continue;
       }
@@ -1650,18 +1775,49 @@ do { \
 
     // Sort both intervals in starting point and ending point increasing orders
     const uint32_t regNum = ctx.sel->getRegNum();
-    this->starting.resize(regNum);
-    this->ending.resize(regNum);
-    for (uint32_t regID = 0; regID < regNum; ++regID)
-      this->starting[regID] = this->ending[regID] = &intervals[regID];
-    std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
-    std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+
+#if USE_PHASE5A_OPTIMIZATIONS
+    // NEW: Phase 5A IntervalStore - populate with all intervals
+    intervalStore_.clear();
+    for (uint32_t regID = 0; regID < regNum; ++regID) {
+      intervalStore_.add(intervals[regID]);
+    }
+    // Sort by start and end points using index-based storage
+    intervalStore_.sortByStart();
+    intervalStore_.sortByEnd();
+
+    // VALIDATION: Keep old code running in parallel
+    if (phase5aValidationMode_) {
+#endif
+      this->starting.resize(regNum);
+      this->ending.resize(regNum);
+      for (uint32_t regID = 0; regID < regNum; ++regID)
+        this->starting[regID] = this->ending[regID] = &intervals[regID];
+      std::sort(this->starting.begin(), this->starting.end(), cmp<true>);
+      std::sort(this->ending.begin(), this->ending.end(), cmp<false>);
+#if USE_PHASE5A_OPTIMIZATIONS
+    }
+#endif
 
     // Remove the registers that were not allocated
     this->expiringID = 0;
     while (this->expiringID < regNum) {
+#if USE_PHASE5A_OPTIMIZATIONS
+      // NEW: Phase 5A - access via IntervalStore
+      const GenRegInterval &interval = intervalStore_.byEnd(this->expiringID);
+
+      // VALIDATION: Ensure matches old method
+      if (phase5aValidationMode_) {
+        const GenRegInterval *oldInterval = ending[this->expiringID];
+        GBE_ASSERT(interval.reg == oldInterval->reg);
+        GBE_ASSERT(interval.maxID == oldInterval->maxID);
+      }
+
+      if (interval.maxID == -INT_MAX)
+#else
       const GenRegInterval *interval = ending[this->expiringID];
       if (interval->maxID == -INT_MAX)
+#endif
         this->expiringID++;
       else
         break;

@@ -24,6 +24,14 @@
  * This context manages the code generation process for Gen6 GPUs,
  * including instruction emission, register allocation, and kernel
  * compilation.
+ *
+ * Gen6 Architecture (Sandy Bridge - 2011):
+ * - Maximum 12 execution units (GT2 configuration)
+ * - 128-bit vector execution units
+ * - Limited 3-source instruction support
+ * - No native A64 addressing (uses legacy 32-bit addressing)
+ * - DirectX 10.1, OpenGL 3.0 support
+ * - No hardware OpenCL support (Beignet provides software implementation)
  */
 
 #ifndef __GBE_GEN6_CONTEXT_HPP__
@@ -40,13 +48,17 @@ namespace gbe
    * This class extends GenContext to provide Gen6-specific code generation.
    * It handles the unique constraints and capabilities of the Gen6 architecture.
    *
-   * Key Gen6 characteristics:
-   * - Maximum 12 execution units (vs 16 in Gen7)
-   * - Limited 3-source instruction support
-   * - Different cache control mechanism
-   * - No native OpenCL hardware features
-   * - Lower performance per EU
-   * - Simplified surface state formats
+   * Key Gen6 Characteristics:
+   * - 6 or 12 execution units (EU) depending on GT1/GT2 configuration
+   * - 128-bit SIMD: 8x 16-bit or 4x 32-bit operations per clock
+   * - Limited 3-source instruction support (no SIMD16 MAD)
+   * - 32-bit addressing only (no A64)
+   * - Lower scratch memory bandwidth
+   * - Simplified surface state formats vs Gen7+
+   *
+   * Implementation Pattern:
+   * Follows Gen75Context pattern (minimal overrides) rather than Gen8
+   * (comprehensive overrides) since Gen6 is closer to base Gen7 design.
    */
   class Gen6Context : public GenContext
   {
@@ -70,110 +82,102 @@ namespace gbe
 
     /**
      * Emit Gen6-specific code for the kernel
+     * Applies Gen6 workarounds and limitations during code generation
      * @return true on success, false on failure
      */
     virtual bool emitCode(void) override;
 
+    /**
+     * Align scratch size to Gen6 requirements
+     * Gen6 has different alignment requirements than Gen7+
+     * @param size Unaligned scratch size
+     * @return Aligned scratch size
+     */
+    virtual uint32_t alignScratchSize(uint32_t size) override;
+
+    /**
+     * Get scratch memory size for Gen6
+     * @return Scratch size in bytes
+     */
+    virtual uint32_t getScratchSize(void) override;
+
+    /**
+     * Emit stack pointer setup for Gen6
+     * Gen6 may have different stack setup requirements
+     */
+    virtual void emitStackPointer(void) override;
+
+    /**
+     * Emit barrier instruction for Gen6
+     * Gen6 has different barrier implementation than Gen7+
+     * @param insn Selection instruction containing barrier operation
+     */
+    virtual void emitBarrierInstruction(const SelectionInstruction &insn) override;
+
   protected:
     /**
-     * Allocate a new Gen6 encoder
-     * @return Pointer to Gen6-specific encoder
+     * Allocate a new Gen6-specific encoder
+     * @return Pointer to Gen6Encoder instance
      */
     virtual GenEncoder* generateEncoder(void) override {
       return GBE_NEW(Gen6Encoder, this->simdWidth, 6, this->deviceID);
     }
 
     /**
-     * Get maximum number of execution units for Gen6
-     * Gen6 has at most 12 EUs (GT2 configuration)
-     * @return Maximum EU count
+     * Create new selection for Gen6
+     * Apply Gen6-specific instruction selection rules
      */
-    virtual uint32_t getMaxExecutionUnits(void) const override {
-      // Gen6 GT1 has 6 EUs, GT2 has 12 EUs
-      // Return maximum for GT2
-      return 12;
-    }
+    virtual void newSelection(void) override;
 
     /**
-     * Get SIMD width for Gen6 kernels
-     * Gen6 works best with SIMD8, SIMD16 has limitations
-     * @return Preferred SIMD width
+     * Emit SLM (Shared Local Memory) offset for Gen6
+     * Gen6 has different SLM handling than Gen7+
      */
-    virtual uint32_t getPreferredSIMDWidth(void) const override {
-      // Gen6 performs best with SIMD8
-      // SIMD16 is supported but with reduced throughput
-      return 8;
-    }
-
-    /**
-     * Check if Gen6 supports specific feature
-     * @param feature Feature to check
-     * @return true if supported, false otherwise
-     */
-    virtual bool supportsFeature(GenFeature feature) const override;
-
-    /**
-     * Get Gen6-specific cache control settings
-     * @return Cache control bits
-     */
-    virtual uint32_t getCacheControl(void) const override;
-
-    /**
-     * Emit Gen6-specific prologue code
-     * Sets up registers and state for kernel execution
-     */
-    virtual void emitPrologue(void) override;
-
-    /**
-     * Emit Gen6-specific epilogue code
-     * Cleanup and finalization before kernel return
-     */
-    virtual void emitEpilogue(void) override;
-
-    /**
-     * Emit Gen6-specific atomic operation
-     * Gen6 has limited atomic support compared to Gen7+
-     * @param atomic Atomic instruction from IR
-     */
-    virtual void emitAtomic(const ir::AtomicInstruction &atomic) override;
-
-    /**
-     * Emit Gen6-specific barrier instruction
-     * @param barrier Barrier instruction from IR
-     */
-    virtual void emitBarrier(const ir::BarrierInstruction &barrier) override;
-
-    /**
-     * Allocate registers with Gen6 constraints
-     * Gen6 has different register pressure characteristics
-     * @return true on success, false if allocation fails
-     */
-    virtual bool allocateRegisters(void) override;
+    virtual void emitSLMOffset(void) override;
 
   private:
     /**
-     * Gen6-specific workarounds and fixes
+     * Gen6-specific private helper methods
+     * These are NOT virtual overrides, but internal implementation details
      */
 
     /**
      * Apply Gen6 cache workarounds
-     * Gen6 has known cache coherency issues that need workarounds
+     * Gen6 has known cache coherency issues that need workarounds:
+     * - Insert explicit flushes after certain operations
+     * - Add memory barriers for SLM access
      */
     void applyGen6CacheWorkarounds(void);
 
     /**
      * Handle Gen6 3-source instruction limitations
-     * Gen6 cannot do SIMD16 for 3-source ops, needs splitting
+     * Gen6 cannot execute SIMD16 for 3-source ops (MAD, etc.)
+     * Split SIMD16 3-source instructions into 2x SIMD8
      */
     void handleThreeSourceLimitations(void);
 
     /**
      * Optimize for Gen6 performance characteristics
-     * - Prefer SIMD8 over SIMD16
+     * - Prefer SIMD8 over SIMD16 for complex operations
      * - Minimize 3-source instructions
-     * - Optimize memory access patterns
+     * - Optimize memory access patterns for Gen6 cache
+     * - Avoid long dependency chains
      */
     void optimizeForGen6(void);
+
+    /**
+     * Check if instruction is a 3-source operation
+     * @param insn Instruction to check
+     * @return true if 3-source op (MAD, DP4, etc.)
+     */
+    bool isThreeSourceOp(const SelectionInstruction &insn) const;
+
+    /**
+     * Split SIMD16 instruction into 2x SIMD8 for Gen6
+     * Required for 3-source ops and some other limitations
+     * @param insn SIMD16 instruction to split
+     */
+    void splitToSIMD8(const SelectionInstruction &insn);
   };
 
 } // namespace gbe

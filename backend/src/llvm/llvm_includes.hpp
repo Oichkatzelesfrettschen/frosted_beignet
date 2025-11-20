@@ -72,7 +72,11 @@
 #include "llvm/Support/FormattedStream.h"
 // LLVM-18 fix: TargetRegistry moved to MC subdirectory
 #include "llvm/MC/TargetRegistry.h"
+#if LLVM_VERSION_MAJOR >= 18
+#include "llvm/TargetParser/Host.h"
+#else
 #include "llvm/Support/Host.h"
+#endif
 #include "llvm/Support/ToolOutputFile.h"
 
 #include "llvm-c/Linker.h"
@@ -104,7 +108,52 @@
 
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 35
 #include "llvm/IR/Mangler.h"
-#include "llvm/IR/CallSite.h"
+// LLVM-11+ fix: CallSite.h was removed, use CallBase and AbstractCallSite instead
+// CallSite was a wrapper around CallInst and InvokeInst
+// Now we use CallBase directly (base class of CallInst, InvokeInst, CallBrInst)
+#if LLVM_VERSION_MAJOR >= 11
+  // For LLVM 11+, CallBase is in Instructions.h (already included above)
+  // #include "llvm/IR/Instructions.h"  // Already included
+  // No CallSite.h needed
+  // Include compatibility layer that provides CallSite wrapper around CallBase
+  #include "llvm/llvm_callsite_compat.hpp"
+
+  // LLVM-11+ also renamed getCalledValue() to getCalledOperand()
+  // Provide inline compatibility helper
+  namespace llvm {
+    inline Value *getCalledValueCompat(CallInst *CI) {
+      return CI->getCalledOperand();
+    }
+    inline Value *getCalledValueCompat(const CallInst *CI) {
+      return CI->getCalledOperand();
+    }
+  }
+  #define GBE_GET_CALLED_VALUE(CI) (CI)->getCalledOperand()
+#else
+  // For LLVM 10 and earlier
+  #include "llvm/IR/CallSite.h"
+  #define GBE_GET_CALLED_VALUE(CI) (CI)->getCalledValue()
+#endif
+
+// LLVM-12+ fix: VectorType::getNumElements() removed for scalable vector support
+// OpenCL uses fixed-width vectors only (vec2, vec3, vec4, etc.)
+#if LLVM_VERSION_MAJOR >= 12
+  #include "llvm/IR/DerivedTypes.h"
+  // For fixed-width vectors, cast to FixedVectorType
+  #define GBE_VECTOR_GET_NUM_ELEMENTS(VT) (cast<llvm::FixedVectorType>(VT)->getNumElements())
+#else
+  // For LLVM 11 and earlier
+  #define GBE_VECTOR_GET_NUM_ELEMENTS(VT) ((VT)->getNumElements())
+#endif
+
+// LLVM-11+ fix: LoadInst/StoreInst::getAlignment() → getAlign().value()
+// getAlignment() deprecated in LLVM 10, removed in LLVM 11+
+#if LLVM_VERSION_MAJOR >= 11
+  #define GBE_GET_ALIGNMENT(I) ((I).getAlign().value())
+#else
+  #define GBE_GET_ALIGNMENT(I) ((I).getAlignment())
+#endif
+
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IRPrintingPasses.h"
@@ -129,7 +178,12 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/PassManager.h"
 #endif
+// LLVM-16+ fix: Triple.h moved from ADT to TargetParser
+#if LLVM_VERSION_MAJOR >= 16
+#include "llvm/TargetParser/Triple.h"
+#else
 #include "llvm/ADT/Triple.h"
+#endif
 
 #include <clang/CodeGen/CodeGenAction.h>
 

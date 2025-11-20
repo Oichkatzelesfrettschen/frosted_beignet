@@ -98,7 +98,7 @@ namespace gbe
         if (callFunc && callFunc->getIntrinsicID() != 0)
           continue;
 
-        std::string fnName = call->getCalledValue()->stripPointerCasts()->getName();
+        std::string fnName = std::string(GBE_GET_CALLED_VALUE(call)->stripPointerCasts()->getName());
 
         if (!MFS.insert(fnName).second) {
           continue;
@@ -309,8 +309,9 @@ namespace gbe
    * materializeAll to mark the module as materialized. */
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 38
     /* Get all GlobalValue from module. */
-    Module::GlobalListType &GVlist = clonedLib->getGlobalList();
-    for(Module::global_iterator GVitr = GVlist.begin();GVitr != GVlist.end();++GVitr) {
+    // LLVM 17+: getGlobalList() is private, use global iterators directly
+    for(Module::global_iterator GVitr = clonedLib->global_begin();
+        GVitr != clonedLib->global_end();++GVitr) {
       GlobalValue * GV = &*GVitr;
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
       ExitOnError ExitOnErr("Can not materialize the clonedLib: ");
@@ -320,10 +321,16 @@ namespace gbe
 #endif
       Gvs.push_back(GV);
     }
+#if LLVM_VERSION_MAJOR < 18
     llvm::legacy::PassManager Extract;
     /* Extract all values we need using GVExtractionPass. */
     Extract.add(createGVExtractionPass(Gvs, false));
     Extract.run(*clonedLib);
+#else
+    // LLVM 18+: createGVExtractionPass removed with legacy PM
+    // TODO: Migrate to new PM or implement alternative approach
+    // For now, skip extraction pass - all globals will be included
+#endif
     /* Mark the library module as materialized for later use. */
 #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 40
     ExitOnError ExitOnErr("Can not materialize the clonedLib: ");
@@ -360,7 +367,8 @@ namespace gbe
     llvm::PassManager passes;
 #endif
 
-#if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
+#if LLVM_VERSION_MAJOR < 18
+  #if LLVM_VERSION_MAJOR * 10 + LLVM_VERSION_MINOR >= 39
     auto PreserveKernel = [=](const GlobalValue &GV) {
       for(size_t i = 0;i < kernels.size(); ++i)
         if(strcmp(GV.getName().data(), kernels[i]))
@@ -369,12 +377,17 @@ namespace gbe
     };
 
     passes.add(createInternalizePass(PreserveKernel));
-#else
+  #else
     passes.add(createInternalizePass(kernels));
-#endif
+  #endif
     passes.add(createGlobalDCEPass());
 
     passes.run(*clonedLib);
+#else
+    // LLVM 18+: createInternalizePass and createGlobalDCEPass removed with legacy PM
+    // TODO: Migrate to new PM (InternalizePass, GlobalDCEPass classes)
+    // For now, skip optimization passes - all symbols will be retained
+#endif
 
     for(size_t i = 0;i < kerneltmp.size(); i++)
       delete[] kerneltmp[i];
