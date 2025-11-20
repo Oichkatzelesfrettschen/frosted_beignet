@@ -168,8 +168,25 @@ endif()
 
 # Find libclang-cpp (Preferred for LLVM 9+)
 set(CLANG_LIBRARIES "")
-find_library(CLANG_CPP_LIB NAMES clang-cpp clang-cpp-${LLVM_MAJOR_VERSION} clang-cpp-${LLVM_VERSION_NODOT}
-             HINTS ${LLVM_LIBRARY_DIR} ${LLVM_LIBRARY_DIR}/../lib)
+
+# Allow user to override the Clang C++ library path
+set(CLANG_CPP_LIB_PATH "" CACHE PATH "Path to libclang-cpp or compatible Clang library")
+
+# Expand search paths to include multi-arch and custom install locations
+set(_CLANG_CPP_SEARCH_PATHS
+    ${CLANG_CPP_LIB_PATH}
+    ${LLVM_LIBRARY_DIR}
+    ${LLVM_LIBRARY_DIR}/../lib
+    /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}
+    /usr/local/lib/${CMAKE_LIBRARY_ARCHITECTURE}
+    /usr/lib
+    /usr/local/lib
+    ${CMAKE_INSTALL_PREFIX}/lib
+    ${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_LIBRARY_ARCHITECTURE}
+)
+
+find_library(CLANG_CPP_LIB NAMES clang-cpp clang-cpp-${LLVM_VERSION_MAJOR} clang-cpp-${LLVM_VERSION_NOPATCH}
+             HINTS ${_CLANG_CPP_SEARCH_PATHS})
 
 if(CLANG_CPP_LIB)
   message(STATUS "Found Clang C++ library: ${CLANG_CPP_LIB}")
